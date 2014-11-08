@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html data-ng-app="chat">
+<head>
+    <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+    <script type="application/javascript" src="/vertxbus.js"></script>
+    <script type="application/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
+
+    <script type="application/javascript">
+        var chat = angular.module('chat', []);
+
+        var eb = null;
+        var g_messages = [{from: "ASD", message: "msg1"}];
+        var chat_scope = null;
+
+        eb = new vertx.EventBus(document.location.href+"eventbus");
+
+        chat.controller('chatController', function ($scope) {
+            this.messages = g_messages;
+            var message = this.msg = {from: "me", message: "example"}
+            chat_scope = $scope;
+
+            this.send = function () {
+                eb.publish('newChatMessage', message);
+                message.message = '';
+            };
+        });
+
+        eb.onopen = function () {
+            eb.registerHandler("newChatMessage", function (msg) {
+                g_messages.unshift(msg);
+                chat_scope.$apply();
+            })
+        };
+
+        eb.onclose = function () {
+            eb = null;
+        };
+    </script>
+
+</head>
+<body>
+<div id="chat" data-ng-controller="chatController as cnt">
+    <h1>Czattty</h1>
+
+    <form>
+        <label for="nickname">Username: </label><input type="text" data-ng-model="cnt.msg.from" id="nickname"><br>
+        <label for="msg">Message: </label><input type="text" data-ng-model="cnt.msg.message" id="msg"><br>
+        <button data-ng-click="cnt.send()">Send message</button>
+    </form>
+    <ul>
+        <li data-ng-repeat="msg in cnt.messages"><strong>{{ msg.from }}</strong> {{ msg.message }}</li>
+    </ul>
+</div>
+</body>
+</html>
