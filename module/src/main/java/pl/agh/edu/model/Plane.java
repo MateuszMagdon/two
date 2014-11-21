@@ -3,7 +3,7 @@ package pl.agh.edu.model;
 /**
  * GameObject representing a plane a player is controlling.
  */
-public class Plane extends GameObject {
+public final class Plane extends GameObject {
 	/**
 	 * The player that controls the plane.
 	 */
@@ -25,6 +25,30 @@ public class Plane extends GameObject {
 		this.player = player;
 		this.health = health;
 		this.weapon = weapon;
+	}
+
+	/**
+	 * Returns new plane instance with health subtracted.
+	 */
+	public Plane subtractHealth(int health) {
+		return new Plane(getX(), getY(), getDirection(), getSpeed(), player,
+				this.health - health, weapon);
+	}
+
+	/**
+	 * Returns new plane instance moved to the given position.
+	 */
+	public Plane moveTo(float x, float y) {
+		return new Plane(x, y, getDirection(), getSpeed(), player, health,
+				weapon);
+	}
+
+	/**
+	 * Returns new plane instance with direction degrees added.
+	 */
+	public Plane changeDirection(int degreesToAdd) {
+		return new Plane(getX(), getY(), getDirection() + degreesToAdd,
+				getSpeed(), player, this.health, weapon);
 	}
 
 	public Player getPlayer() {

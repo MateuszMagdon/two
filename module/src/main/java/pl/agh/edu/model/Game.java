@@ -11,7 +11,7 @@ import com.google.gson.Gson;
  * Represents full state of the game. It is broadcasted every X milliseconds to
  * every client.
  */
-public class Game {
+public final class Game {
 	private static final Gson GSON = new Gson();
 	
 	/**

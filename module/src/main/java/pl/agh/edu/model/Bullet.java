@@ -3,7 +3,7 @@ package pl.agh.edu.model;
 /**
  * GameObject that represents a bullet shot from a weapon.
  */
-public class Bullet extends GameObject {
+public final class Bullet extends GameObject {
 	/**
 	 * The initial X position.
 	 */
