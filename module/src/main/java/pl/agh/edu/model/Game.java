@@ -9,10 +9,19 @@ import com.google.common.collect.ImmutableList;
  * every client.
  */
 public class Game {
+	/**
+	 * The list of all players.
+	 */
 	private final ImmutableList<Player> players;
 
+	/**
+	 * The list all alive planes.
+	 */
 	private final ImmutableList<Plane> planes;
 
+	/**
+	 * The list of all active bullets.
+	 */
 	private final ImmutableList<Bullet> bullets;
 
 	public Game(ImmutableList<Player> players, ImmutableList<Plane> planes,

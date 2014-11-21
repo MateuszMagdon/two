@@ -4,10 +4,19 @@ package pl.agh.edu.model;
  * GameObject that represents a bullet shot from a weapon.
  */
 public class Bullet extends GameObject {
+	/**
+	 * The initial X position.
+	 */
 	private final float startPositionX;
 
+	/**
+	 * The initial Y position.
+	 */
 	private final float startPositionY;
 
+	/**
+	 * The waepon that shot this bullet.
+	 */
 	private final Weapon weapon;
 
 	public Bullet(float x, float y, int direction, float speed,

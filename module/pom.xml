@@ -93,10 +93,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-	  <groupId>com.google.guava</groupId>
-	  <artifactId>guava</artifactId>
-	  <version>18.0</version>
-	</dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>18.0</version>
+    </dependency>
     
 
     <!-- Add any other dependencies that you want packaged into your module (in the lib dir) here
