@@ -24,7 +24,7 @@ public class BridgeServer extends Verticle {
         // Also serve the static resources. In real life this would probably be done by a CDN
         server.requestHandler(new Handler<HttpServerRequest>() {
             public void handle(HttpServerRequest req) {
-                if (req.path().equals("/")) req.response().sendFile("index.html"); // Serve the index.html
+                if (req.path().equals("/")) req.response().sendFile("C:/Users/Bartek/repo/two/module/src/main/resources/index.html"); // Serve the index.html
                 if (req.path().endsWith("vertxbus.js")) req.response().sendFile("vertxbus-2.1.js"); // Serve the js
             }
         });

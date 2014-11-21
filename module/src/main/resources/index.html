@@ -17,6 +17,7 @@
 
         chat.controller('chatController', function ($scope) {
             this.messages = g_messages;
+            this.user = { login: "", group: "red" };
             var message = this.msg = {from: "me", message: "example"}
             chat_scope = $scope;
 
@@ -24,6 +25,10 @@
                 eb.publish('newChatMessage', message);
                 message.message = '';
             };
+
+            this.connect = function(user) {
+                eb.publish("connect", {'user': user.login, 'group': user.group});
+            }
         });
 
         eb.onopen = function () {
@@ -41,16 +46,19 @@
 </head>
 <body>
 <div id="chat" data-ng-controller="chatController as cnt">
-    <h1>Czattty</h1>
+    <h1>Login</h1>
 
-    <form>
-        <label for="nickname">Username: </label><input type="text" data-ng-model="cnt.msg.from" id="nickname"><br>
-        <label for="msg">Message: </label><input type="text" data-ng-model="cnt.msg.message" id="msg"><br>
-        <button data-ng-click="cnt.send()">Send message</button>
+    <form name="loginForm" >
+        <label for="login">Login:</label>
+        <input name="login" id="login" data-ng-model="cnt.user.login"/>
+        <label for="group">Group:</label>
+        <select name="group" id="group" data-ng-model="cnt.user.group">
+            <option selected="selected" value="red">red</option>
+            <option value="blue">blue</option>
+        </select>
+        <button data-ng-click="cnt.connect(cnt.user)">Login</button>
     </form>
-    <ul>
-        <li data-ng-repeat="msg in cnt.messages"><strong>{{ msg.from }}</strong> {{ msg.message }}</li>
-    </ul>
+
 </div>
 </body>
 </html>
