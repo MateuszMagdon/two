@@ -1,5 +1,7 @@
 package pl.agh.edu;
 
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
@@ -43,5 +45,18 @@ public class BridgeServer extends Verticle {
         sockJSServer.bridge(new JsonObject().putString("prefix", "/eventbus"), permitted, permitted);
 
         server.listen(8888);
+        
+        
+        container.deployVerticle("pl.agh.edu.StateUpdateListener", new AsyncResultHandler<String>() {
+            public void handle(AsyncResult<String> deployResult) {
+              if (deployResult.succeeded()) {
+            	  logger.info("Successfully deployed StateUpdateListener");
+              } else {
+            	  logger.error("Deploying StateUpdateListener failed.");
+              }
+            }
+          });
+        
+        
     }
 }
