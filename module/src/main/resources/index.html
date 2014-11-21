@@ -27,7 +27,7 @@
             };
 
             this.connect = function(user) {
-                eb.publish("connect", {'user': user.login, 'group': user.group});
+                eb.send("connect", {'login': user.login, 'group': user.group});
             }
         });
 
@@ -51,6 +51,8 @@
     <form name="loginForm" >
         <label for="login">Login:</label>
         <input name="login" id="login" data-ng-model="cnt.user.login"/>
+        <br />
+
         <label for="group">Group:</label>
         <select name="group" id="group" data-ng-model="cnt.user.group">
             <option selected="selected" value="red">red</option>
@@ -58,6 +60,8 @@
         </select>
         <button data-ng-click="cnt.connect(cnt.user)">Login</button>
     </form>
+
+
 
 </div>
 </body>
