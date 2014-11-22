@@ -16,18 +16,42 @@
         eb = new vertx.EventBus(document.location.href+"eventbus");
 
         chat.controller('chatController', function ($scope) {
-            this.messages = g_messages;
-            this.user = { login: "", group: "red" };
-            var message = this.msg = {from: "me", message: "example"}
+            var _self = this;
+            _self.messages = g_messages;
+            _self.logged = false;
+            _self.user = { login: "", group: "red" };
+            var message = this.msg = {from: "me", message: "example"};
             chat_scope = $scope;
 
-            this.send = function () {
+            _self.loggedHandler = function(reply, replier) {
+                if (reply.status === 'ok') {
+                    eb.sessionID = reply.sessionID;
+                    _self.user.login = reply.login;
+                    _self.user.group = reply.group;
+                    _self.logged = true;
+                    console.log("logged:");
+                } else {
+                    console.log("error logging:")
+                }
+
+                console.log(reply)
+            };
+
+            _self.send = function () {
                 eb.publish('newChatMessage', message);
                 message.message = '';
             };
 
-            this.connect = function(user) {
-                eb.send("connect", {'login': user.login, 'group': user.group});
+            _self.connect = function(user) {
+                eb.send("connect", {'login': user.login, 'group': user.group}, scoped(this.loggedHandler));
+            };
+
+            _self.logout = function() {
+                eb.send("disconnect", {"sessionID": eb.sessionID});
+                eb.sessionID = null;
+                _self.user.login = "";
+                _self.user.group = "red";
+                _self.logged = false;
             }
         });
 
@@ -41,14 +65,24 @@
         eb.onclose = function () {
             eb = null;
         };
+
+        function scoped(f) {
+            return function() {
+                var _args = arguments;
+                var _this = this;
+                return chat_scope.$apply(function() {
+                    return f.apply(_this, _args);
+                });
+            }
+        }
     </script>
 
 </head>
 <body>
 <div id="chat" data-ng-controller="chatController as cnt">
-    <h1>Login</h1>
 
-    <form name="loginForm" >
+    <form name="loginForm" data-ng-hide="cnt.logged">
+        <h1>Login</h1>
         <label for="login">Login:</label>
         <input name="login" id="login" data-ng-model="cnt.user.login"/>
         <br />
@@ -58,8 +92,10 @@
             <option selected="selected" value="red">red</option>
             <option value="blue">blue</option>
         </select>
-        <button data-ng-click="cnt.connect(cnt.user)">Login</button>
+        <button data-ng-click="cnt.connect(cnt.user)" type="submit">Login</button>
     </form>
+
+    <button data-ng-click="cnt.logout()" type="button" data-ng-show="cnt.logged">Logout</button>
 
 
 

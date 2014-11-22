@@ -14,10 +14,12 @@ import org.vertx.java.platform.Verticle;
  * 2014-11-08.
  */
 public class BridgeServer extends Verticle {
+    private static final long AUTH_TIMEOUT = 5 * 60 * 1000;
     Logger logger;
 
     public void start() {
         logger = container.logger();
+        container.deployVerticle("pl.agh.edu.LoginVerticle");
 
         HttpServer server = vertx.createHttpServer();
 
@@ -29,14 +31,18 @@ public class BridgeServer extends Verticle {
             }
         });
 
-        JsonArray permitted = new JsonArray();
-        permitted.add(new JsonObject()); // Let everything through
+        JsonArray inboundPermitted = new JsonArray();
+        inboundPermitted.add(new JsonObject().putString("address", "connect"))
+                .add(new JsonObject().putString("address", "disconnect").putBoolean("requires_auth", true));
+
+        JsonArray outboundPermitted = new JsonArray();
+        outboundPermitted.add(new JsonObject()); // Let everything through
 
         ServerHook hook = new ServerHook(logger);
 
         SockJSServer sockJSServer = vertx.createSockJSServer(server);
         sockJSServer.setHook(hook);
-        sockJSServer.bridge(new JsonObject().putString("prefix", "/eventbus"), permitted, permitted);
+        sockJSServer.bridge(new JsonObject().putString("prefix", "/eventbus"), inboundPermitted, outboundPermitted, AUTH_TIMEOUT, "authorise");
 
         server.listen(8888);
     }
