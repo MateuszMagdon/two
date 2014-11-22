@@ -26,6 +26,9 @@ public class BridgeServer extends Verticle {
             public void handle(HttpServerRequest req) {
                 if (req.path().equals("/")) req.response().sendFile("index.html"); // Serve the index.html
                 if (req.path().endsWith("vertxbus.js")) req.response().sendFile("vertxbus-2.1.js"); // Serve the js
+                if (req.path().endsWith("style.css")) req.response().sendFile("static/css/styles.css"); // Serve the js
+                if (req.path().endsWith("sock.js")) req.response().sendFile("static/js/sock.js"); // Serve the js
+                if (req.path().endsWith("angular.js")) req.response().sendFile("static/js/angular.js"); // Serve the js
             }
         });
 

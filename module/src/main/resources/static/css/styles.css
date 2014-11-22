@@ -1,0 +1,29 @@
+#chat {
+    position:absolute;
+    right: 0;
+    width: 30%;
+}
+
+#messageList .normal {
+
+}
+
+#messageList .group {
+    color: #0F0;
+}
+
+#messageList .whisper {
+    color: #F00;
+}
+
+#messageList .whisperTo {
+    color: #00F;
+}
+
+#chat h3 {
+    color: #FFF;
+    text-transform: uppercase;
+    background-color: forestgreen;
+    padding: 10px;
+    margin: 0;
+}
