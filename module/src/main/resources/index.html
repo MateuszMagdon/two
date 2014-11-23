@@ -30,6 +30,11 @@
             return {from: username, message: "", class: "normal", date: null};
         };
 
+        function scrollChatWindow() {
+            var $messageList = $('#messageList');
+            $messageList.scrollTop($messageList.find('ul').height());
+        }
+
         chat.controller('chatController', function ($scope) {
             this.messages = g_messages;
             var message = $scope.message = createEmptyMessage();
@@ -51,6 +56,7 @@
                     angular.copy(message, cloned);
                     cloned.from = "Whisper to: " + to;
                     g_messages.push(cloned);
+                    scrollChatWindow();
                 }
 
                 if (message.message.indexOf('/group') == 0) {
@@ -73,8 +79,7 @@
                 msg.date = new Date();
                 g_messages.push(msg);
                 chat_scope.$apply();
-                var $messageList = $('#messageList');
-                $messageList.scrollTop($messageList.find('ul').height());
+                scrollChatWindow();
             };
             eb.registerHandler("chat.message", function (msg) {
                 handleMsg(msg);

@@ -29,7 +29,7 @@ body {
 }
 
 #messageList .whisper {
-    color: #F00;
+    color: forestgreen;
 }
 
 #messageList .toWhisper {
