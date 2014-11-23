@@ -3,7 +3,7 @@ package pl.agh.edu.model;
 /**
  * Anything that can be placed on the map.
  */
-public class GameObject {
+public abstract class GameObject {
 	/**
 	 * X position in range of (0, Map.X_MAX).
 	 */
