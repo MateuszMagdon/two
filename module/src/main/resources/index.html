@@ -56,7 +56,6 @@
                     angular.copy(message, cloned);
                     cloned.from = "Whisper to: " + to;
                     g_messages.push(cloned);
-                    scrollChatWindow();
                 }
 
                 if (message.message.indexOf('/group') == 0) {
@@ -66,6 +65,9 @@
 
                 eb.publish(address, message);
                 $scope.message = message = createEmptyMessage();
+                setTimeout(function() { // hack :/
+                    scrollChatWindow();
+                }, 10);
             };
 
             $scope.usernameClicked = function (user) {
