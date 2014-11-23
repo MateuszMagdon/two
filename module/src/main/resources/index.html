@@ -73,7 +73,8 @@
                 msg.date = new Date();
                 g_messages.push(msg);
                 chat_scope.$apply();
-                $('#messageList').scrollTop($('#messageList').height());
+                var $messageList = $('#messageList');
+                $messageList.scrollTop($messageList.find('ul').height());
             };
             eb.registerHandler("chat.message", function (msg) {
                 handleMsg(msg);
@@ -94,16 +95,16 @@
             eb = null;
         };
 
-        $(document).ready(function() {
-           $(window).keyup(function(event) {
-               var msgInput = $('#msg');
-               if(event.keyCode == 84) {
+        $(document).ready(function () {
+            $(window).keyup(function (event) {
+                var msgInput = $('#msg');
+                if (event.keyCode == 84) {
                     msgInput.focus();
                 }
 
-               if(event.keyCode == 27 && msgInput.is(":focus")) {
-                   msgInput.blur();
-               }
+                if (event.keyCode == 27 && msgInput.is(":focus")) {
+                    msgInput.blur();
+                }
             });
         });
     </script>
@@ -124,11 +125,14 @@
     <div id="chatWrapper">
         <div class="chatBox">
             <h3>Chat</h3>
-            <ul id="messageList" class="chatList">
-                <li data-ng-repeat="msg in cnt.messages" ng-class="msg.class"><strong>{{ msg.from }} ({{ msg.date |
-                    date:'mediumTime' }})</strong> {{ msg.message }}
-                </li>
-            </ul>
+
+            <div id="messageList">
+                <ul class="chatList">
+                    <li data-ng-repeat="msg in cnt.messages" ng-class="msg.class"><strong>{{ msg.from }} ({{ msg.date |
+                        date:'mediumTime' }})</strong> {{ msg.message }}
+                    </li>
+                </ul>
+            </div>
             <div id="sendForm">
                 <form ng-submit="send()">
                     <input type="text" data-ng-model="message.message" id="msg"><br>
