@@ -25,11 +25,11 @@ body {
 }
 
 #messageList .group {
-    color: #0F0;
+    color: forestgreen;
 }
 
 #messageList .whisper {
-    color: forestgreen;
+    color: #F00;
 }
 
 #messageList .toWhisper {
