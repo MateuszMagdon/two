@@ -3,7 +3,7 @@ package pl.agh.edu.model;
 /**
  * Thing that can shot bullets of a type.
  */
-public class Weapon {
+public final class Weapon {
 	private final String name;
 
 	/**
