@@ -22,7 +22,7 @@
             <option selected="selected" value="red">red</option>
             <option value="blue">blue</option>
         </select>
-        <button data-ng-click="cnt.connect(cnt.user)" type="submit">Login</button>
+        <button data-ng-click="cnt.connect(cnt.user)" type="submit" data-ng-disabled="cnt.user.login.length==0">Login</button>
     </form>
 
     <button data-ng-click="cnt.logout()" type="button" data-ng-show="cnt.logged">Logout</button>
