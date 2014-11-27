@@ -28,6 +28,8 @@ public class BridgeServer extends Verticle {
             public void handle(HttpServerRequest req) {
                 if (req.path().equals("/")) req.response().sendFile("index.html"); // Serve the index.html
                 if (req.path().endsWith("vertxbus.js")) req.response().sendFile("vertxbus-2.1.js"); // Serve the js
+                if (req.path().endsWith("js/login.js")) req.response().sendFile("js/login.js");
+                if (req.path().endsWith("js/lib/angular-vertxbus.min.js")) req.response().sendFile("js/lib/angular-vertxbus.min.js");
             }
         });
 

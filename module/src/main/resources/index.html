@@ -1,91 +1,21 @@
 <!DOCTYPE html>
-<html data-ng-app="chat">
+<html data-ng-app="login">
 <head>
     <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
     <script type="application/javascript" src="/vertxbus.js"></script>
     <script type="application/javascript"
-            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
-
-    <script type="application/javascript">
-        var chat = angular.module('chat', []);
-
-        var eb = null;
-        var g_messages = [{from: "ASD", message: "msg1"}];
-        var chat_scope = null;
-
-        eb = new vertx.EventBus(document.location.href+"eventbus");
-
-        chat.controller('chatController', function ($scope) {
-            var _self = this;
-            _self.messages = g_messages;
-            _self.logged = false;
-            _self.user = { login: "", group: "red" };
-            var message = this.msg = {from: "me", message: "example"};
-            chat_scope = $scope;
-
-            _self.loggedHandler = function(reply, replier) {
-                if (reply.status === 'ok') {
-                    eb.sessionID = reply.sessionID;
-                    _self.user.login = reply.login;
-                    _self.user.group = reply.group;
-                    _self.logged = true;
-                    console.log("logged:");
-                } else {
-                    console.log("error logging:")
-                }
-
-                console.log(reply)
-            };
-
-            _self.send = function () {
-                eb.publish('newChatMessage', message);
-                message.message = '';
-            };
-
-            _self.connect = function(user) {
-                eb.send("connect", {'login': user.login, 'group': user.group}, scoped(this.loggedHandler));
-            };
-
-            _self.logout = function() {
-                eb.send("disconnect", {"sessionID": eb.sessionID});
-                eb.sessionID = null;
-                _self.user.login = "";
-                _self.user.group = "red";
-                _self.logged = false;
-            }
-        });
-
-        eb.onopen = function () {
-            eb.registerHandler("newChatMessage", function (msg) {
-                g_messages.unshift(msg);
-                chat_scope.$apply();
-            })
-        };
-
-        eb.onclose = function () {
-            eb = null;
-        };
-
-        function scoped(f) {
-            return function() {
-                var _args = arguments;
-                var _this = this;
-                return chat_scope.$apply(function() {
-                    return f.apply(_this, _args);
-                });
-            }
-        }
-    </script>
-
+            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.4/angular.min.js"></script>
+    <script type="application/javascript" src="js/lib/angular-vertxbus.min.js"></script>
+    <script src="js/login.js" type="application/javascript"></script>
 </head>
 <body>
-<div id="chat" data-ng-controller="chatController as cnt">
+<div id="loginContainer" data-ng-controller="loginController as cnt">
 
     <form name="loginForm" data-ng-hide="cnt.logged">
         <h1>Login</h1>
-        <label for="login">Login:</label>
+        <label for="loginContainer">Login:</label>
         <input name="login" id="login" data-ng-model="cnt.user.login"/>
-        <br />
+        <br/>
 
         <label for="group">Group:</label>
         <select name="group" id="group" data-ng-model="cnt.user.group">
@@ -96,8 +26,6 @@
     </form>
 
     <button data-ng-click="cnt.logout()" type="button" data-ng-show="cnt.logged">Logout</button>
-
-
 
 </div>
 </body>
