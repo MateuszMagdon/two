@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html data-ng-app="communication">
+<head>
+    <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+    <script type="application/javascript" src="/vertxbus.js"></script>
+    <script type="application/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
+
+    <script type="application/javascript">
+    
+    	var communication = angular.module('communication', []);
+    	var eb = null;
+    	var communication_scope = null;
+    	
+    	var current_model = null;
+    	
+    	var update = { update : "update"};
+    	
+    	eb = new vertx.EventBus(document.location.href + "eventbus");
+    	
+    	communication.controller('communicationController', function($scope) {
+    		communication_scope = $scope;
+    		
+    		this.current_model = current_model;
+    		this.update = update;
+    		
+    		this.send_update = function() {
+    			eb.publish("two.server", update)
+    		};
+    	});
+    	
+    	eb.onopen = function () {
+            eb.registerHandler("two.clients", function (new_model) {
+            	current_model = new_model;
+            	console.log("model_updated");
+            	console.log(current_model);
+            })
+        };
+
+
+        eb.onclose = function () {
+            eb = null;
+        };
+    </script>
+
+</head>
+<body>
+<div id="communication_test" data-ng-controller="communicationController as cnt">
+    <button data-ng-click="cnt.send_update()">Send update</button>
+</div>
+</body>
+</html>
