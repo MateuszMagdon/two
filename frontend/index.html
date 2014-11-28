@@ -24,25 +24,29 @@
             var canvas = new fabric.Canvas('gameVisualisation');
             canvas.backgroundColor = 'rgb(0,0,0)';
 
-            var triangle = new fabric.Triangle({
-                width:20,
-                height:30,
-                fill:'rgb(255,255,255)',
-                left: canvas.getWidth() / 2,
-                top: canvas.getHeight() / 2
-            });
-            var circle = new fabric.Circle({
-                radius:3,
-                fill:'rgb(255,0,0)',
-                left: canvas.getWidth() / 2,
-                top: canvas.getHeight() / 2 - 100
-            });
-            canvas.add(triangle, circle);
+            var planeElement = document.getElementById('plane');
+            var missileElement = document.getElementById('missile');
 
-            triangle.elementId = '1';
-            circle.elementId = '2';
+            var missile = new fabric.Image(missileElement, {
+                left: canvas.getWidth() / 2,
+                top: canvas.getHeight() / 2 - 100,
+                scaleX: 0.05,
+                scaleY: 0.05
+            });
 
-            var elements = [triangle, circle];
+            var plane = new fabric.Image(planeElement, {
+                left: canvas.getWidth() / 2,
+                top: canvas.getHeight() / 2 - 100,
+                scaleX: 0.25,
+                scaleY: 0.25
+            });
+
+            canvas.add(plane, missile);
+
+            plane.elementId = '1';
+            missile.elementId = '2';
+
+            var elements = [plane, missile];
 
             var refreshElement = function (element, newVals) {
                 element.set({
@@ -63,7 +67,7 @@
             }
 
             function getRandomVal (maxVal) {
-            	var v = Math.floor((Math.random() * maxVal) + 1)
+            	var v = Math.floor((Math.random() * maxVal) + 1);
             	console.log("MAXVAL " + maxVal + " return " + v);
             	return v;
             }
@@ -87,14 +91,14 @@
             setTimeout(randomRefresh, 1000);
 
             $(document).keydown(function(e) {
-                var a = triangle.getAngle();
+                var a = plane.getAngle();
                 switch(e.which) {
                     case 37:
-                            triangle.setAngle(a - 5);
+                            plane.setAngle(a - 5);
                             canvas.renderAll(); // if not set will be painted after another action on canvas
                         break;
                     case 39:
-                            triangle.setAngle(a + 5);
+                            plane.setAngle(a + 5);
                             canvas.renderAll();
                         break;
 
@@ -104,5 +108,7 @@
             });
         });
     </script>
+    <img src="images/fighter.png" id="plane" style="opacity:0"/>
+    <img src="images/missile.png" id="missile" style="opacity:0"/>
 </body>
 </html>
