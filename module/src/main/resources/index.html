@@ -1,56 +1,152 @@
 <!DOCTYPE html>
 <html data-ng-app="chat">
 <head>
-    <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/jquery.js"></script>
+    <script src="/sock.js"></script>
     <script type="application/javascript" src="/vertxbus.js"></script>
     <script type="application/javascript"
-            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
+            src="/angular.js"></script>
 
     <script type="application/javascript">
         var chat = angular.module('chat', []);
 
+        var username = "czesław";
+        var group = "red";
+        var users = [
+            {username: "czesio", team: "Red"},
+            {username: "wiesio", team: "Red"},
+            {username: "stasia", team: "Blue"}
+        ];
+
         var eb = null;
-        var g_messages = [{from: "ASD", message: "msg1"}];
+        var g_messages = [];
         var chat_scope = null;
 
-        eb = new vertx.EventBus(document.location.href+"eventbus");
+        eb = new vertx.EventBus(document.location.href + "eventbus");
+
+        var createEmptyMessage = function () {
+            return {from: username, message: "", class: "normal", date: null};
+        };
+
+        function scrollChatWindow() {
+            var $messageList = $('#messageList');
+            $messageList.scrollTop($messageList.find('ul').height());
+        }
 
         chat.controller('chatController', function ($scope) {
             this.messages = g_messages;
-            var message = this.msg = {from: "me", message: "example"}
+            var message = $scope.message = createEmptyMessage();
             chat_scope = $scope;
 
-            this.send = function () {
-                eb.publish('newChatMessage', message);
-                message.message = '';
+            $scope.users = users;
+
+            $scope.send = function () {
+                var address = 'chat.message';
+                if (message.message.indexOf('/whisper ') == 0) {
+                    message.message = message.message.substring(9);
+                    var to = message.message.substring(0, message.message.indexOf(' '));
+                    message.message = message.message.substring(message.message.indexOf(' '));
+                    address = 'chat.message.' + to;
+                    message.class = "toWhisper";
+                    message.date = new Date();
+
+                    var cloned = {};
+                    angular.copy(message, cloned);
+                    cloned.from = "Whisper to: " + to;
+                    g_messages.push(cloned);
+                }
+
+                if (message.message.indexOf('/group') == 0) {
+                    message.message = message.message.substring(6);
+                    address = 'chat.message.' + group;
+                }
+
+                eb.publish(address, message);
+                $scope.message = message = createEmptyMessage();
+                setTimeout(function() { // hack :/
+                    scrollChatWindow();
+                }, 10);
             };
+
+            $scope.usernameClicked = function (user) {
+                message.message = '/whisper ' + user.username + ' ';
+                $('#msg').focus();
+            }
         });
 
         eb.onopen = function () {
-            eb.registerHandler("newChatMessage", function (msg) {
-                g_messages.unshift(msg);
+            var handleMsg = function (msg) {
+                msg.date = new Date();
+                g_messages.push(msg);
                 chat_scope.$apply();
-            })
+                scrollChatWindow();
+            };
+            eb.registerHandler("chat.message", function (msg) {
+                handleMsg(msg);
+            });
+
+            eb.registerHandler("chat.message." + username, function (msg) {
+                msg.class = "whisper";
+                handleMsg(msg);
+            });
+
+            eb.registerHandler("chat.message." + group, function (msg) {
+                msg.class = "group";
+                handleMsg(msg);
+            });
         };
 
         eb.onclose = function () {
             eb = null;
         };
+
+        $(document).ready(function () {
+            $(window).keyup(function (event) {
+                var msgInput = $('#msg');
+                if (event.keyCode == 84) {
+                    msgInput.focus();
+                }
+
+                if (event.keyCode == 27 && msgInput.is(":focus")) {
+                    msgInput.blur();
+                }
+            });
+        });
     </script>
 
 </head>
 <body>
 <div id="chat" data-ng-controller="chatController as cnt">
-    <h1>Czattty</h1>
+    <div id="usersWrapper">
+        <div class="usersList">
+            <h3>Users</h3>
+            <ul class="chatList">
+                <li data-ng-repeat="user in users" ng-click="usernameClicked(user)" class="{{ user.team }}">{{
+                    user.username }} ({{ user.team }})
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="chatWrapper">
+        <div class="chatBox">
+            <h3>Chat</h3>
 
-    <form>
-        <label for="nickname">Username: </label><input type="text" data-ng-model="cnt.msg.from" id="nickname"><br>
-        <label for="msg">Message: </label><input type="text" data-ng-model="cnt.msg.message" id="msg"><br>
-        <button data-ng-click="cnt.send()">Send message</button>
-    </form>
-    <ul>
-        <li data-ng-repeat="msg in cnt.messages"><strong>{{ msg.from }}</strong> {{ msg.message }}</li>
-    </ul>
+            <div id="messageList">
+                <ul class="chatList">
+                    <li data-ng-repeat="msg in cnt.messages" ng-class="msg.class"><strong>{{ msg.from }} ({{ msg.date |
+                        date:'mediumTime' }})</strong> {{ msg.message }}
+                    </li>
+                </ul>
+            </div>
+            <div id="sendForm">
+                <form ng-submit="send()">
+                    <input type="text" data-ng-model="message.message" id="msg"><br>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>
