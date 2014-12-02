@@ -1,0 +1,108 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#chat {
+    position:absolute;
+    right: 0;
+    width: 30%;
+    bottom: 0;
+    top: 0;
+    padding-bottom: 30px;
+    border-left: 2px solid forestgreen;
+}
+
+#messageList {
+    overflow: auto;
+    top: 42px;
+    bottom: 29px;
+    position: absolute;
+}
+
+#messageList .normal {
+
+}
+
+#messageList .group {
+    color: forestgreen;
+}
+
+#messageList .whisper {
+    color: #F00;
+}
+
+#messageList .toWhisper {
+    color: #00F;
+}
+
+#chat h3 {
+    color: #FFF;
+    text-transform: uppercase;
+    background-color: forestgreen;
+    padding: 10px;
+    margin: 0;
+}
+
+.chatList {
+    list-style: none;
+    margin: 0 1% 0 2%;
+    padding: 0;
+    width: 97%;
+}
+
+.chatList li strong {
+    min-width: 30%;
+    text-align: right;
+    display: inline-block;
+}
+
+#chat #sendForm {
+    bottom: 0;
+    position: absolute;
+    left: 0;
+    right: 24px;
+}
+
+#chat #sendForm input {
+    width: 100%;
+    padding: 5px 10px;
+}
+
+.usersList ul {
+    top: 49px;
+    bottom: 0;
+    overflow: auto;
+    position: absolute;
+}
+
+.usersList li {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.usersList li.Red {
+    color: #F00;
+}
+
+.usersList li.Blue {
+    color: #00F;
+}
+
+#usersWrapper {
+    top: 0;
+    height: 30%;
+    position: absolute;
+    width: 100%;
+}
+
+#usersWrapper .usersList {
+    height: 100%;
+}
+
+#chatWrapper {
+    bottom: 0;
+    position: absolute;
+    height: 70%;
+    width: 100%;
+}

@@ -30,12 +30,17 @@ public class BridgeServer extends Verticle {
                 if (req.path().endsWith("vertxbus.js")) req.response().sendFile("vertxbus-2.1.js"); // Serve the js
                 if (req.path().endsWith("js/login.js")) req.response().sendFile("js/login.js");
                 if (req.path().endsWith("js/lib/angular-vertxbus.min.js")) req.response().sendFile("js/lib/angular-vertxbus.min.js");
+                if (req.path().endsWith("style.css")) req.response().sendFile("static/css/styles.css"); // Serve the js
+                if (req.path().endsWith("sock.js")) req.response().sendFile("static/js/sock.js"); // Serve the js
+                if (req.path().endsWith("angular.js")) req.response().sendFile("static/js/angular.js"); // Serve the js
+                if (req.path().endsWith("jquery.js")) req.response().sendFile("static/js/jquery-2.1.1.min.js"); // Serve the js
             }
         });
 
         JsonArray inboundPermitted = new JsonArray();
         inboundPermitted.add(new JsonObject().putString("address", "connect"))
-                .add(new JsonObject().putString("address", "disconnect").putBoolean("requires_auth", true));
+                .add(new JsonObject().putString("address", "disconnect").putBoolean("requires_auth", true))
+                .add(new JsonObject().putString("address_re", "chat.message.*").putBoolean("requires_auth", true));
 
         JsonArray outboundPermitted = new JsonArray();
         outboundPermitted.add(new JsonObject()); // Let everything through

@@ -116,8 +116,10 @@ public class LoginVerticle extends BusModBase {
 
         if (info != null) {
             JsonObject reply = new JsonObject().putString("login", info.login);
+            container.logger().info("authorized: " + message.body());
             sendOK(message, reply);
         } else {
+            container.logger().info("unauthorized: " + message.body());
             sendStatus("denied", message);
         }
     }
