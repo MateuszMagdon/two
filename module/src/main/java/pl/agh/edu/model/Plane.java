@@ -3,11 +3,16 @@ package pl.agh.edu.model;
 /**
  * GameObject representing a plane a player is controlling.
  */
-public final class Plane extends GameObject {
+public final class Plane extends GameObject<Plane> {
 	/**
 	 * The player that controls the plane.
 	 */
 	private final Player player;
+
+	/**
+	 * Static type of plane info
+	 */
+	private final PlaneType planeType;
 
 	/**
 	 * Health, in range (0, 100).
@@ -15,62 +20,82 @@ public final class Plane extends GameObject {
 	private final int health;
 
 	/**
-	 * The weapon this plane has.
-	 */
-	private final Weapon weapon;
-	
-	/**
 	 * whether Player holds the fire button down
 	 */
 	private final boolean firingEnabled;
-	
+
 	/**
 	 * last time interval at which the plane shot weapon
 	 */
 	private final long lastFiredAt;
-	
-	public Plane(float x, float y, int direction, float speed, Player player,
-			int health, Weapon weapon, boolean firingEnabled, long lastFiredAt) {
+
+	private final ChangeRequest.Turn turn;
+
+	public Plane(PlaneType planeType, float x, float y, int direction,
+			float speed, Player player, int health, boolean firingEnabled,
+			long lastFiredAt, ChangeRequest.Turn turn) {
 		super(x, y, direction, speed);
 		this.player = player;
 		this.health = health;
-		this.weapon = weapon;
+		this.planeType = planeType;
 		this.firingEnabled = firingEnabled;
 		this.lastFiredAt = lastFiredAt;
+		this.turn = turn;
+	}
+
+	@Override
+	public Plane moveTo(float x, float y) {
+		return new Plane(getPlaneType(), getX(), getY(), getDirection(),
+				getSpeed(), getPlayer(), getHealth(), getFiringEnabled(),
+				getLastFiredAt(), getTurn());
+	}
+
+	/**
+	 * To calculate degreesToAdd use PlaneType.turnDigreesPerInterval and turn values
+	 */
+	@Override
+	public Plane changeDirection(int degreesToAdd) {
+		return new Plane(getPlaneType(), getX(), getY(), getDirection()
+				+ degreesToAdd, getSpeed(), getPlayer(), getHealth(),
+				getFiringEnabled(), getLastFiredAt(), getTurn());
+	}
+
+	/**
+	 * at timeInterval bullet was generated
+	 * 
+	 * @param timeInterval
+	 * @return
+	 */
+	public Plane shotFired(long timeInterval) {
+		return new Plane(getPlaneType(), getX(), getY(), getDirection(),
+				getSpeed(), getPlayer(), getHealth(), getFiringEnabled(),
+				timeInterval, getTurn());
 	}
 
 	/**
 	 * Returns new plane instance with health subtracted.
 	 */
 	public Plane subtractHealth(int health) {
-		return new Plane(getX(), getY(), getDirection(), getSpeed(), player,
-				this.health - health, weapon, getFiringEnabled(), getLastFiredAt());
+		return new Plane(getPlaneType(), getX(), getY(), getDirection(),
+				getSpeed(), getPlayer(), getHealth() - health,
+				getFiringEnabled(), getLastFiredAt(), getTurn());
 	}
 
-	/**
-	 * Returns new plane instance moved to the given position.
-	 */
-	public Plane moveTo(float x, float y) {
-		return new Plane(x, y, getDirection(), getSpeed(), player, health,
-				weapon, getFiringEnabled(), getLastFiredAt());
+	public Plane changeFiringState(boolean fireButtonPressed) {
+		return new Plane(getPlaneType(), getX(), getY(), getDirection(),
+				getSpeed(), getPlayer(), getHealth(), fireButtonPressed,
+				getLastFiredAt(), getTurn());
 	}
 
-	/**
-	 * Returns new plane instance with direction degrees added.
-	 */
-	public Plane changeDirection(int degreesToAdd) {
-		return new Plane(getX(), getY(), getDirection() + degreesToAdd,
-				getSpeed(), player, this.health, weapon, getFiringEnabled(), getLastFiredAt());
+	public Plane turn(ChangeRequest.Turn turn) {
+		return new Plane(getPlaneType(), getX(), getY(), getDirection(),
+				getSpeed(), getPlayer(), getHealth(), getFiringEnabled(),
+				getLastFiredAt(), turn);
 	}
-	
-	public Plane changeFiringState(boolean fireButtonPressed){
-		return new Plane(getX(), getY(), getDirection(),
-				getSpeed(), player, this.health, weapon, fireButtonPressed, getLastFiredAt());
-	}
-	
-	public Plane shotFired(long timeInterval){
-		return new Plane(getX(), getY(), getDirection(),
-				getSpeed(), player, this.health, weapon, getFiringEnabled(), timeInterval);
+
+	public Plane handleChangeRequest(ChangeRequest change) {
+		return turn(change.getDirectionDelta()).changeFiringState(
+				change.isFiringEnabled());
 	}
 
 	public Player getPlayer() {
@@ -81,15 +106,19 @@ public final class Plane extends GameObject {
 		return health;
 	}
 
-	public Weapon getWeapon() {
-		return weapon;
-	}
-	
 	public boolean getFiringEnabled() {
 		return firingEnabled;
 	}
-	
+
 	public long getLastFiredAt() {
 		return lastFiredAt;
+	}
+
+	public PlaneType getPlaneType() {
+		return planeType;
+	}
+
+	public ChangeRequest.Turn getTurn() {
+		return turn;
 	}
 }
