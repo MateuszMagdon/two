@@ -3,7 +3,7 @@ package pl.agh.edu.model;
 /**
  * GameObject that represents a bullet shot from a weapon.
  */
-public final class Bullet extends GameObject {
+public final class Bullet extends GameObject<Bullet> {
 	/**
 	 * The initial X position.
 	 */
@@ -19,9 +19,9 @@ public final class Bullet extends GameObject {
 	 */
 	private final Weapon weapon;
 
-	public Bullet(float x, float y, int direction, float speed,
-			float startPositionX, float startPositionY, Weapon weapon) {
-		super(x, y, direction, speed);
+	public Bullet(float x, float y, int direction, float startPositionX,
+			float startPositionY, Weapon weapon) {
+		super(x, y, direction, weapon.getBulletSpeed());
 		this.startPositionX = startPositionX;
 		this.startPositionY = startPositionY;
 		this.weapon = weapon;
@@ -37,5 +37,17 @@ public final class Bullet extends GameObject {
 
 	public Weapon getWeapon() {
 		return weapon;
+	}
+
+	@Override
+	public Bullet moveTo(float x, float y) {
+		return new Bullet(x, y, getDirection(), getStartPositionX(),
+				getStartPositionY(), getWeapon());
+	}
+
+	@Override
+	public Bullet changeDirection(int degreesToAdd) {
+		return new Bullet(getX(), getY(), getDirection() + degreesToAdd,
+				getStartPositionX(), getStartPositionY(), getWeapon());
 	}
 }

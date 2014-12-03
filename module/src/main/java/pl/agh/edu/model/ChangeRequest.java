@@ -4,15 +4,19 @@ package pl.agh.edu.model;
  * Object representing change player's state change request.
  */
 public final class ChangeRequest {
+	
+	enum Turn{
+		LEFT,RIGHT,NONE;
+	}
 	/**
 	 * The id of a player that sends the request.
 	 */
 	private final int playerId;
 	
 	/**
-	 * The delta in direction degrees.
+	 * Direction change started - turning left, right or not at all.
 	 */
-	private final int directionDelta;
+	private final Turn directionDelta;
 	
 	/**
 	 * Indicates the change in players button-press
@@ -20,17 +24,17 @@ public final class ChangeRequest {
 	 */
 	private final boolean firingEnabled;
 
-	public ChangeRequest(int playerId, int directionDelta, boolean shotFired) {
+	public ChangeRequest(int playerId, Turn directionDelta, boolean shotFired) {
 		this.playerId = playerId;
 		this.directionDelta = directionDelta;
 		this.firingEnabled = shotFired;
 	}
 
-	public int getDirectionDelta() {
+	public Turn getDirectionDelta() {
 		return directionDelta;
 	}
 
-	public boolean isShotFired() {
+	public boolean isFiringEnabled() {
 		return firingEnabled;
 	}
 
