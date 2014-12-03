@@ -15,14 +15,15 @@ public final class ChangeRequest {
 	private final int directionDelta;
 	
 	/**
-	 * Whether the shot was fired.
+	 * Indicates the change in players button-press
+	 * send this change once once per player press of the button and once per release.
 	 */
-	private final boolean shotFired;
+	private final boolean firingEnabled;
 
 	public ChangeRequest(int playerId, int directionDelta, boolean shotFired) {
 		this.playerId = playerId;
 		this.directionDelta = directionDelta;
-		this.shotFired = shotFired;
+		this.firingEnabled = shotFired;
 	}
 
 	public int getDirectionDelta() {
@@ -30,7 +31,7 @@ public final class ChangeRequest {
 	}
 
 	public boolean isShotFired() {
-		return shotFired;
+		return firingEnabled;
 	}
 
 	public int getPlayerId() {

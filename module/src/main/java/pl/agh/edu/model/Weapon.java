@@ -21,12 +21,18 @@ public final class Weapon {
 	 * interval.
 	 */
 	private final float bulletSpeed;
+	
+	/**
+	 * minimum time measured in server time intervals between shots
+	 */
+	private final int minTimeBetweenShots;
 
-	public Weapon(String name, float range, int damage, float bulletSpeed) {
+	public Weapon(String name, float range, int damage, float bulletSpeed, int minTimeBetweenShots) {
 		this.name = name;
 		this.range = range;
 		this.damage = damage;
 		this.bulletSpeed = bulletSpeed;
+		this.minTimeBetweenShots = minTimeBetweenShots;
 	}
 
 	public String getName() {
@@ -43,5 +49,9 @@ public final class Weapon {
 
 	public float getBulletSpeed() {
 		return bulletSpeed;
+	}
+	
+	public int getMinTimeBetweenShots() {
+		return minTimeBetweenShots;
 	}
 }
