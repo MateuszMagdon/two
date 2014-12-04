@@ -106,3 +106,20 @@ body {
     height: 70%;
     width: 100%;
 }
+
+#board {
+    position: absolute;
+    right: 30%;
+    top: 0;
+    bottom: 0;
+    width: 60%;
+    border-left: 2px solid forestgreen;
+}
+
+.canvas-container {
+    margin:0 auto ;
+}
+
+.boardImage {
+    display: none;
+}

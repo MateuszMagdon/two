@@ -6,8 +6,8 @@
     <script src="/jquery.js"></script>
     <script src="/sock.js"></script>
     <script type="application/javascript" src="/vertxbus.js"></script>
-    <script type="application/javascript"
-            src="/angular.js"></script>
+    <script type="application/javascript" src="/angular.js"></script>
+    <script type="application/javascript" src="/fabric.js"></script>
     <script type="application/javascript" src="js/lib/angular-vertxbus.min.js"></script>
     <script type="application/javascript">
         var app = angular.module('app', ['knalli.angular-vertxbus']);
@@ -121,6 +121,7 @@
         });
     </script>
     <script src="js/login.js" type="application/javascript"></script>
+    <script src="js/board.js" type="application/javascript"></script>
 </head>
 <body>
 <div id="chat" data-ng-controller="chatController as cnt" data-ng-show="cnt.logged">
@@ -152,6 +153,14 @@
             </div>
         </div>
     </div>
+</div>
+
+<div id="board" data-ng-controller="gameController as cnt" data-ng-show="cnt.logged">
+    <canvas id="gameVisualisation">
+        Your browser does not support Canvas element. Shame on you!
+    </canvas>
+    <img src="fighter.png" id="plane" class="boardImage" />
+    <img src="missile.png" id="missile" class="boardImage" />
 </div>
 
 <div id="loginContainer" data-ng-controller="loginController as cnt">
