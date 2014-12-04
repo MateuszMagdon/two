@@ -1,56 +1,177 @@
 <!DOCTYPE html>
-<html data-ng-app="chat">
+<html data-ng-app="app">
 <head>
-    <script src="//cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/jquery.js"></script>
+    <script src="/sock.js"></script>
     <script type="application/javascript" src="/vertxbus.js"></script>
     <script type="application/javascript"
-            src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
-
+            src="/angular.js"></script>
+    <script type="application/javascript" src="js/lib/angular-vertxbus.min.js"></script>
     <script type="application/javascript">
-        var chat = angular.module('chat', []);
+        var app = angular.module('app', ['knalli.angular-vertxbus']);
 
-        var eb = null;
-        var g_messages = [{from: "ASD", message: "msg1"}];
-        var chat_scope = null;
+        app.controller('chatController', ["$scope", "$rootScope", "vertxEventBusService", function ($scope, $rootScope, vertxEventBusService) {
+            var _self = this;
+            var username = "czesław";
+            var group = "red";
+            var users = [
+                {username: "czesio", team: "Red"},
+                {username: "wiesio", team: "Red"},
+                {username: "stasia", team: "Blue"}
+            ];
 
-        eb = new vertx.EventBus(document.location.href+"eventbus");
+            var eb = vertxEventBusService;
+            var g_messages = [];
+            var chat_scope = null;
+            _self.logged = false;
 
-        chat.controller('chatController', function ($scope) {
+
+            var createEmptyMessage = function () {
+                return {from: username, message: "", class: "normal", date: null};
+            };
+
+            function scrollChatWindow() {
+                var $messageList = $('#messageList');
+                $messageList.scrollTop($messageList.find('ul').height());
+            }
+
             this.messages = g_messages;
-            var message = this.msg = {from: "me", message: "example"}
+            var message = $scope.message = createEmptyMessage();
             chat_scope = $scope;
 
-            this.send = function () {
-                eb.publish('newChatMessage', message);
-                message.message = '';
+            $scope.users = users;
+
+            $scope.send = function () {
+                var address = 'chat.message';
+                if (message.message.indexOf('/whisper ') == 0) {
+                    message.message = message.message.substring(9);
+                    var to = message.message.substring(0, message.message.indexOf(' '));
+                    message.message = message.message.substring(message.message.indexOf(' '));
+                    address = 'chat.message.' + to;
+                    message.class = "toWhisper";
+                    message.date = new Date();
+
+                    var cloned = {};
+                    angular.copy(message, cloned);
+                    cloned.from = "Whisper to: " + to;
+                    g_messages.push(cloned);
+                }
+
+                if (message.message.indexOf('/group') == 0) {
+                    message.message = message.message.substring(6);
+                    address = 'chat.message.' + group;
+                }
+
+                eb.publish(address, message);
+                $scope.message = message = createEmptyMessage();
+                setTimeout(function() { // hack :/
+                    scrollChatWindow();
+                }, 10);
             };
-        });
 
-        eb.onopen = function () {
-            eb.registerHandler("newChatMessage", function (msg) {
-                g_messages.unshift(msg);
+            $scope.usernameClicked = function (user) {
+                message.message = '/whisper ' + user.username + ' ';
+                $('#msg').focus();
+            }
+
+            var handleMsg = function (msg) {
+                msg.date = new Date();
+                g_messages.push(msg);
                 chat_scope.$apply();
-            })
-        };
+                scrollChatWindow();
+            };
 
-        eb.onclose = function () {
-            eb = null;
-        };
+            eb.addListener("chat.message", function (msg) {
+                handleMsg(msg);
+            });
+
+            eb.addListener("chat.message." + username, function (msg) {
+                msg.class = "whisper";
+                handleMsg(msg);
+            });
+
+            eb.addListener("chat.message." + group, function (msg) {
+                msg.class = "group";
+                handleMsg(msg);
+            });
+
+            $rootScope.$on("logged", function() {
+                _self.logged = true;
+            });
+
+            $rootScope.$on("disconnected", function() {
+                _self.logged = false;
+            });
+        }]);
+
+
+        $(document).ready(function () {
+            $(window).keyup(function (event) {
+                var msgInput = $('#msg');
+                if (event.keyCode == 84) {
+                    msgInput.focus();
+                }
+
+                if (event.keyCode == 27 && msgInput.is(":focus")) {
+                    msgInput.blur();
+                }
+            });
+        });
     </script>
-
+    <script src="js/login.js" type="application/javascript"></script>
 </head>
 <body>
-<div id="chat" data-ng-controller="chatController as cnt">
-    <h1>Czattty</h1>
+<div id="chat" data-ng-controller="chatController as cnt" data-ng-show="cnt.logged">
+    <div id="usersWrapper">
+        <div class="usersList">
+            <h3>Users</h3>
+            <ul class="chatList">
+                <li data-ng-repeat="user in users" ng-click="usernameClicked(user)" class="{{ user.team }}">{{
+                    user.username }} ({{ user.team }})
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="chatWrapper">
+        <div class="chatBox">
+            <h3>Chat</h3>
 
-    <form>
-        <label for="nickname">Username: </label><input type="text" data-ng-model="cnt.msg.from" id="nickname"><br>
-        <label for="msg">Message: </label><input type="text" data-ng-model="cnt.msg.message" id="msg"><br>
-        <button data-ng-click="cnt.send()">Send message</button>
+            <div id="messageList">
+                <ul class="chatList">
+                    <li data-ng-repeat="msg in cnt.messages" ng-class="msg.class"><strong>{{ msg.from }} ({{ msg.date |
+                        date:'mediumTime' }})</strong> {{ msg.message }}
+                    </li>
+                </ul>
+            </div>
+            <div id="sendForm">
+                <form ng-submit="send()">
+                    <input type="text" data-ng-model="message.message" id="msg"><br>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="loginContainer" data-ng-controller="loginController as cnt">
+
+    <form name="loginForm" data-ng-hide="cnt.logged">
+        <h1>Login</h1>
+        <label for="login">Login:</label>
+        <input name="login" id="login" data-ng-model="cnt.user.login"/>
+        <br/>
+
+        <label for="group">Group:</label>
+        <select name="group" id="group" data-ng-model="cnt.user.group">
+            <option selected="selected" value="red">red</option>
+            <option value="blue">blue</option>
+        </select>
+        <button data-ng-click="cnt.connect(cnt.user)" type="submit" data-ng-disabled="cnt.user.login.length==0">Login</button>
     </form>
-    <ul>
-        <li data-ng-repeat="msg in cnt.messages"><strong>{{ msg.from }}</strong> {{ msg.message }}</li>
-    </ul>
+
+    <button data-ng-click="cnt.logout()" type="button" data-ng-show="cnt.logged">Logout</button>
+
 </div>
 </body>
 </html>

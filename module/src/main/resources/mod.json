@@ -1,6 +1,4 @@
 {
-
-  // Java verticle
   "main":"pl.agh.edu.BridgeServer",
 
   // If your module is going to be registered in the Vert.x module registry you will also need the following
