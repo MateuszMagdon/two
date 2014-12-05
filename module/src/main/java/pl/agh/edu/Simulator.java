@@ -6,9 +6,6 @@ import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 import pl.agh.edu.model.*;
 
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -22,21 +19,20 @@ public class Simulator extends Verticle {
     private Game game;
     private EventBus eb;
     private Boolean continueGame = true;
-
-    public static Queue<ChangeRequest> changeRequestQueue = new ConcurrentLinkedQueue<>();
+    Long time = System.currentTimeMillis();
 
     public Plane createSimplePlane() {
-        return new Plane(PlaneTypes.STANDARD.getPlaneType(), 0, 0, 0, 10.f, null, 10, false, System.currentTimeMillis(), null);
+        return new Plane(PlaneTypes.STANDARD.getPlaneType(), 0, 0, 45, 10.f, null, 10, false, System.currentTimeMillis(), null);
     }
 
-    public Game createNewGame(){
+    public Game createNewGame() {
         return new Game(ImmutableList.<Player>of(), ImmutableList.<Plane>of(createSimplePlane()), ImmutableList.<Bullet>of());
     }
 
     public void start() {
         logger = container.logger();
 
-        map =  vertx.sharedData().getMap("shared");
+        map = vertx.sharedData().getMap("shared");
         game = createNewGame();
         map.put("game", game);
 
@@ -44,14 +40,13 @@ public class Simulator extends Verticle {
         logger.info("Starting simulator");
 
         eb.publish("game.start", true);
-        Long time = System.currentTimeMillis();
-        while(continueGame) {
-            float delta = (System.currentTimeMillis() - time)/1000;
+        getVertx().setTimer(5, p -> {
+            float delta = (System.currentTimeMillis() - time) / 1000;
             time = System.currentTimeMillis();
 
             ImmutableList.Builder<Plane> planeBuilder = new ImmutableList.Builder<>();
             // update positions
-            for(Plane plane: game.getPlanes()) {
+            for (Plane plane : game.getPlanes()) {
                 Plane element = plane.moveTo((float) (plane.getX() + (plane.getSpeed() * Math.cos(plane.getDirection())) * delta), (float) (plane.getY() + (plane.getSpeed() * Math.sin(plane.getDirection())) * delta));
                 planeBuilder.add(element);
                 logger.info("Moving plane to " + element.getX() + " " + element.getY());
@@ -65,7 +60,15 @@ public class Simulator extends Verticle {
             eb.publish("game.updated", true);
             // eb.publish("game.over", true);
             // eb.publish("game.information", "{winner: Player, gameTime: 10000, someting else?}");
-        }
+        });
         eb.publish("game.start", false);
+
+        getVertx().eventBus().registerHandler("user.connect", message -> {
+
+        });
+
+        getVertx().eventBus().registerHandler("user.disconnect", message -> {
+
+        });
     }
 }
