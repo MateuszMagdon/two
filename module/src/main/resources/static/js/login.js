@@ -5,6 +5,7 @@
     var app = angular.module('app')
         .controller('loginController', ["$scope", "$rootScope", "vertxEventBus", "vertxEventBusService", function ($scope, $rootScope, vertxEventBus, vertxEventBusService) {
             var _self = this;
+            _self.available_groups = ["red", "blue"];
             _self.logged = false;
             _self.user = {login: "", group: "red"};
 

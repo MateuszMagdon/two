@@ -125,11 +125,25 @@ body {
 }
 
 #loginContainer {
-    @import "vendor/bootstrap-theme.min.css";
+    @import (inline) "vendor/bootstrap.css";
+    @import (inline) "vendor/select.css";
 
     #loginForm {
-        display: block;
-        margin: 0 auto;
-        width: 300px;
+        margin-top: 100px;
+
+        #login {
+            display: inline-block;
+            width: 80%;
+            margin-right: 10px;
+        }
+
+        #group {
+            width: 80%;
+        }
+
+        .help-block {
+            display: inline-block;
+            margin: 0;
+        }
     }
 }
