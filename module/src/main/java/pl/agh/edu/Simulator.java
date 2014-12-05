@@ -7,6 +7,8 @@ import org.vertx.java.platform.Verticle;
 import pl.agh.edu.model.*;
 
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -20,6 +22,8 @@ public class Simulator extends Verticle {
     private Game game;
     private EventBus eb;
     private Boolean continueGame = true;
+
+    public static Queue<ChangeRequest> changeRequestQueue = new ConcurrentLinkedQueue<>();
 
     public Plane createSimplePlane() {
         return new Plane(PlaneTypes.STANDARD.getPlaneType(), 0, 0, 0, 10.f, null, 10, false, System.currentTimeMillis(), null);
@@ -56,7 +60,7 @@ public class Simulator extends Verticle {
             // detect collisions
 
             // make changes according to keys
-            game = new Game(game.getPlayers(), game.getPlanes(), game.getBullets());
+            game = new Game(game.getPlayers(), planeBuilder.build(), game.getBullets());
             map.put("game", game);
             eb.publish("game.updated", true);
             // eb.publish("game.over", true);
