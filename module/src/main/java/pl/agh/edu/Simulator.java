@@ -56,7 +56,7 @@ public class Simulator extends Verticle {
             // detect collisions
 
             // make changes according to keys
-            game = new Game(game.getPlayers(), game.getPlanes(), game.getBullets());
+            game = new Game(game.getPlayers(), planeBuilder.build(), game.getBullets());
             map.put("game", game);
             eb.publish("game.updated", true);
             // eb.publish("game.over", true);
