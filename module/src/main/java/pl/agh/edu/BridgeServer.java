@@ -23,13 +23,14 @@ public class BridgeServer extends Verticle {
         logger = container.logger();
         container.deployVerticle("pl.agh.edu.LoginVerticle");
         container.deployWorkerVerticle("pl.agh.edu.Simulator");
+        container.deployVerticle("pl.agh.edu.StateUpdateListener");
 
         HttpServer server = vertx.createHttpServer();
 
         // Also serve the static resources. In real life this would probably be done by a CDN
         server.requestHandler(new Handler<HttpServerRequest>() {
             public void handle(HttpServerRequest req) {
-                if (req.path().equals("/")) req.response().sendFile("communication_test.html"); // Serve the index.html
+                if (req.path().equals("/")) req.response().sendFile("index.html"); // Serve the index.html
                 if (req.path().endsWith("vertxbus.js")) req.response().sendFile("vertxbus-2.1.js"); // Serve the js
                 if (req.path().endsWith("js/login.js")) req.response().sendFile("js/login.js");
                 if (req.path().endsWith("js/lib/angular-vertxbus.min.js")) req.response().sendFile("js/lib/angular-vertxbus.min.js");
@@ -55,18 +56,6 @@ public class BridgeServer extends Verticle {
         sockJSServer.bridge(new JsonObject().putString("prefix", "/eventbus"), inboundPermitted, outboundPermitted, AUTH_TIMEOUT, "authorise");
 
         server.listen(8888);
-        
-        
-        container.deployVerticle("pl.agh.edu.StateUpdateListener", new AsyncResultHandler<String>() {
-            public void handle(AsyncResult<String> deployResult) {
-              if (deployResult.succeeded()) {
-            	  logger.info("Successfully deployed StateUpdateListener");
-              } else {
-            	  logger.error("Deploying StateUpdateListener failed.");
-              }
-            }
-          });
-        
         
     }
 }
