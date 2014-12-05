@@ -99,13 +99,15 @@ function setUpBoard() {
             var _self = this;
             _self.logged = false;
 
-            _self.canvas = setUpBoard();
+            _self.canvas = null;
 
             $rootScope.$on("logged", function() {
                 _self.logged = true;
 
-                _self.canvas.setWidth(1024);
-                _self.canvas.setHeight(768);
+                _self.canvas = setUpBoard();
+
+                _self.canvas.setWidth(800);
+                _self.canvas.setHeight(600);
             });
 
             $rootScope.$on("disconnected", function() {
