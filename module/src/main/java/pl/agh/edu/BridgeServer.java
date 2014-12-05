@@ -9,6 +9,8 @@ import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.sockjs.SockJSServer;
 import org.vertx.java.platform.Verticle;
 
+import java.nio.file.Paths;
+
 /**
  * Created by Michal
  * 2014-11-08.
@@ -26,18 +28,8 @@ public class BridgeServer extends Verticle {
         // Also serve the static resources. In real life this would probably be done by a CDN
         server.requestHandler(new Handler<HttpServerRequest>() {
             public void handle(HttpServerRequest req) {
-                if (req.path().equals("/")) req.response().sendFile("index.html"); // Serve the index.html
-                if (req.path().endsWith("vertxbus.js")) req.response().sendFile("vertxbus-2.1.js"); // Serve the js
-                if (req.path().endsWith("js/login.js")) req.response().sendFile("js/login.js");
-                if (req.path().endsWith("js/board.js")) req.response().sendFile("js/board.js");
-                if (req.path().endsWith("js/lib/angular-vertxbus.min.js")) req.response().sendFile("js/lib/angular-vertxbus.min.js");
-                if (req.path().endsWith("style.css")) req.response().sendFile("static/css/styles.css"); // Serve the js
-                if (req.path().endsWith("sock.js")) req.response().sendFile("static/js/sock.js"); // Serve the js
-                if (req.path().endsWith("angular.js")) req.response().sendFile("static/js/angular.js"); // Serve the js
-                if (req.path().endsWith("jquery.js")) req.response().sendFile("static/js/jquery-2.1.1.min.js"); // Serve the js
-                if (req.path().endsWith("fabric.js")) req.response().sendFile("static/js/fabric.min.js"); // Serve the js
-                if (req.path().endsWith("fighter.png")) req.response().sendFile("static/img/fighter.png"); // Serve the js
-                if (req.path().endsWith("missile.png")) req.response().sendFile("static/img/missile.png"); // Serve the js
+                if (req.path().equals("/")) req.response().sendFile(local("resources/index.html")); // Serve the index.html
+                else req.response().sendFile(local(req.path()));
             }
         });
 
@@ -56,5 +48,9 @@ public class BridgeServer extends Verticle {
         sockJSServer.bridge(new JsonObject().putString("prefix", "/eventbus"), inboundPermitted, outboundPermitted, AUTH_TIMEOUT, "authorise");
 
         server.listen(8888);
+    }
+
+    private String local(String file) {
+        return Paths.get("src/main", file).toAbsolutePath().toString();
     }
 }

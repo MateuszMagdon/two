@@ -2,13 +2,24 @@
 <html data-ng-app="app">
 <head>
     <meta charset="utf-8"/>
-    <link rel="stylesheet" href="/style.css">
-    <script src="/jquery.js"></script>
-    <script src="/sock.js"></script>
-    <script type="application/javascript" src="/vertxbus.js"></script>
-    <script type="application/javascript" src="/angular.js"></script>
-    <script type="application/javascript" src="/fabric.js"></script>
-    <script type="application/javascript" src="js/lib/angular-vertxbus.min.js"></script>
+
+    <link  rel="stylesheet/less" type="text/css" href="resources/static/css/styles.less">
+
+    <script>
+        var less = {
+            env: "development"
+        };
+    </script>
+
+    <script src="resources/static/js/vendor/jquery-2.1.1.js" type="application/javascript" ></script>
+    <script src="resources/static/js/vendor/sock.js" type="application/javascript" ></script>
+    <script src="resources/static/js/vendor/vertxbus-2.1.js" type="application/javascript" ></script>
+    <script src="resources/static/js/vendor/angular.js" type="application/javascript" ></script>
+    <script src="resources/static/js/vendor/bootstrap.js" type="application/javascript" ></script>
+    <script src="resources/static/js/vendor/less.js" type="application/javascript" ></script>
+    <script src="resources/static/js/vendor/angular-vertxbus.js" type="application/javascript" ></script>
+    <script src="resources/static/js/vendor/fabric.js" type="application/javascript" ></script>
+
     <script type="application/javascript">
         var app = angular.module('app', ['knalli.angular-vertxbus']);
 
@@ -120,8 +131,9 @@
             });
         });
     </script>
-    <script src="js/login.js" type="application/javascript"></script>
-    <script src="js/board.js" type="application/javascript"></script>
+
+    <script src="resources/static/js/login.js" type="application/javascript"></script>
+    <script src="resources/static/js/board.js" type="application/javascript"></script>
 </head>
 <body>
 <div id="chat" data-ng-controller="chatController as cnt" data-ng-show="cnt.logged">
@@ -159,13 +171,13 @@
     <canvas id="gameVisualisation">
         Your browser does not support Canvas element. Shame on you!
     </canvas>
-    <img src="fighter.png" id="plane" class="boardImage" />
-    <img src="missile.png" id="missile" class="boardImage" />
+    <img src="resources/static/img/fighter.png" id="plane" class="boardImage" />
+    <img src="resources/static/img/missile.png" id="missile" class="boardImage" />
 </div>
 
 <div id="loginContainer" data-ng-controller="loginController as cnt">
 
-    <form name="loginForm" data-ng-hide="cnt.logged">
+    <form name="loginForm" id="loginForm" data-ng-hide="cnt.logged">
         <h1>Login</h1>
         <label for="login">Login:</label>
         <input name="login" id="login" data-ng-model="cnt.user.login"/>

@@ -9,7 +9,6 @@
             _self.user = {login: "", group: "red"};
 
             _self.connect = function (user) {
-                //console.log("connect");
                 vertxEventBusService.send("connect", {'login': user.login, 'group': user.group}).then(function (reply) {
                     if (reply.status === 'ok') {
                         vertxEventBus.EventBus.prototype.sessionID = reply.sessionID;
