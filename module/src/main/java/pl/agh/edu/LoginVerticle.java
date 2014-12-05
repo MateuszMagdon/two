@@ -75,9 +75,13 @@ public class LoginVerticle extends BusModBase {
             public void handle(Long timerID) {
                 container.logger().info("logging out: " + login);
                 sessions.remove(sessionID);
+                sendClientDisconnectedInfo(login);
             }
         });
         sessions.put(sessionID, new LoginInfo(login, group, timerID));
+        
+        sendClientConnectedInfo(login, group);
+        
         JsonObject jsonReply = new JsonObject().putString("sessionID", sessionID)
                 .putString("login", login)
                 .putString("group", group);
@@ -100,6 +104,9 @@ public class LoginVerticle extends BusModBase {
         if (info != null) {
             container.logger().info("logging out: " + info.login);
             vertx.cancelTimer(info.timerID);
+            
+            sendClientDisconnectedInfo(info.login);
+            
             return true;
         } else {
             return false;
@@ -124,4 +131,14 @@ public class LoginVerticle extends BusModBase {
         }
     }
 
+    private void sendClientConnectedInfo(String login, String group) {
+    	JsonObject connectedInfo = new JsonObject().putString("login", login)
+        		.putString("group", group);
+        eb.publish("client.connected", connectedInfo);
+    }
+    
+    private void sendClientDisconnectedInfo(String login) {
+    	JsonObject disconnectedInfo = new JsonObject().putString("login", login);
+        eb.publish("client.disconnected", disconnectedInfo);
+    }
 }
