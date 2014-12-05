@@ -101,13 +101,17 @@ function setUpBoard() {
 
             _self.canvas = null;
 
+            var height = $("#board").height();
+            var width = $("#board").width();
+
             $rootScope.$on("logged", function() {
                 _self.logged = true;
 
                 _self.canvas = setUpBoard();
 
-                _self.canvas.setWidth(800);
-                _self.canvas.setHeight(600);
+                _self.canvas.setHeight(height);
+                _self.canvas.setWidth(width);
+
             });
 
             $rootScope.$on("disconnected", function() {
