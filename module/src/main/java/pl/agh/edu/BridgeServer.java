@@ -22,6 +22,7 @@ public class BridgeServer extends Verticle {
     public void start() {
         logger = container.logger();
         container.deployVerticle("pl.agh.edu.LoginVerticle");
+        container.deployWorkerVerticle("pl.agh.edu.Simulator");
 
         HttpServer server = vertx.createHttpServer();
 

@@ -2,6 +2,7 @@ package pl.agh.edu.model;
 
 import org.vertx.java.core.json.JsonObject;
 
+import org.vertx.java.core.shareddata.Shareable;
 import pl.agh.edu.model.Player;
 
 import com.google.common.collect.ImmutableList;
@@ -11,7 +12,7 @@ import com.google.gson.Gson;
  * Represents full state of the game. It is broadcasted every X milliseconds to
  * every client.
  */
-public final class Game {
+public final class Game implements Shareable {
 	private static final Gson GSON = new Gson();
 	
 	/**
