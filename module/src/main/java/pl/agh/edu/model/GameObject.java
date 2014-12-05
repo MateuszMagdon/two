@@ -3,12 +3,12 @@ package pl.agh.edu.model;
 /**
  * Anything that can be placed on the map.
  */
-public abstract class GameObject {
+public abstract class GameObject<T> {
 	/**
 	 * X position in range of (0, Map.X_MAX).
 	 */
 	private final float x;
-	
+
 	/**
 	 * X position in range of (0, Map.Y_MAX).
 	 */
@@ -30,7 +30,7 @@ public abstract class GameObject {
 		this.direction = direction;
 		this.speed = speed;
 	}
-	
+
 	public float getX() {
 		return x;
 	}
@@ -46,4 +46,14 @@ public abstract class GameObject {
 	public float getSpeed() {
 		return speed;
 	}
+
+	/**
+	 * Returns new object instance moved to the given position.
+	 */
+	public abstract T moveTo(float x, float y);
+
+	/**
+	 * Returns new plane instance with direction degrees added.
+	 */
+	public abstract T changeDirection(int degreesToAdd);
 }
