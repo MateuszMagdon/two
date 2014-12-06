@@ -9,7 +9,7 @@
             _self.canvas = null;
             _self.boardHeight = board.height();
             _self.boardWidth = board.width();
-
+            _self.scaleData = getScaleData();
 
             $rootScope.$on("logged", function(event, data) {
                 _self.logged = true;
@@ -17,7 +17,7 @@
                 _self.group = data.group;
                 _self.canvas = setUpBoard(_self.boardHeight, _self.boardWidth);
 
-                updateCanvas(_self.canvas, game);
+                updateCanvas(_self.canvas, _self.scaleData, game);
             });
 
             $rootScope.$on("disconnected", function() {
@@ -25,6 +25,25 @@
             });
         }]);
 })();
+
+function getScaleData() {
+    return {
+        horizontalUnits: 50,
+        verticalUnits: 30,
+        plane: {
+            widthInUnits: 2,
+            heightInUnits: 3,
+            width: 213,
+            height: 296
+        },
+        missile: {
+            widthInUnits: 1,
+            heightInUnits: 1,
+            width: 320,
+            height: 640
+        }
+    }
+}
 
 function setUpBoard(height, width) {
     fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
@@ -35,35 +54,61 @@ function setUpBoard(height, width) {
     canvas.setHeight(height);
     canvas.setWidth(width);
 
+    //$(document).keydown(function(e) {
+    //    var a = plane.getAngle();
+    //    switch(e.which) {
+    //        case 37:
+    //            plane.setAngle(a - 5);
+    //            canvas.renderAll(); // if not set will be painted after another action on canvas
+    //            break;
+    //        case 39:
+    //            plane.setAngle(a + 5);
+    //            canvas.renderAll();
+    //            break;
+    //
+    //        default: return;
+    //    }
+    //    e.preventDefault(); // prevent the default action (scroll / move caret)
+    //});
+
     return canvas
 }
 
-function updateCanvas(canvas, gameObject) {
+function updateCanvas(canvas, scaleData, gameObject) {
+    function addCanvasObjects(units, gameObjects, pictureName, scale) {
+        var scaleX = getScale(units.horizontal, scale.widthInUnits, scale.width);
+        var scaleY = getScale(units.vertical, scale.heightInUnits, scale.height);
+        var picture = document.getElementById(pictureName);
 
-    function prepareGroup(elements, name, scale) {
-        for (var index = 0; index < elements.length; ++index) {
-            var image = document.getElementById(name),
-                item = elements[index],
-                result = [];
+        for (var index = 0; index < gameObjects.length; ++index) {
+            var gameObject = gameObjects[index];
 
-            var el = (new fabric.Image(image, {
-                left: item.x,
-                top: item.y,
-                scaleX: scale,
-                scaleY: scale,
-                angle: item.direction
+            var image = (new fabric.Image(picture, {
+                left: gameObject.x,
+                top: gameObject.y,
+                scaleX: scaleX,
+                scaleY: scaleY,
+                angle: gameObject.direction
             }));
-            canvas.add(el);
-        }
 
-        return new fabric.Group(result);
+            canvas.add(image);
+        }
+    }
+
+    function getScale(unitInPixels, desiredSizeInUnits, currentSizeInPixels) {
+        var desiredSize = unitInPixels * desiredSizeInUnits;
+        return desiredSize / currentSizeInPixels;
     }
 
     canvas.clear();
 
-    var planes = prepareGroup(gameObject.planes, 'plane', 0.25);
-    var bullets = prepareGroup(gameObject.bullets, 'missile', 0.05);
+    var units = {
+        horizontal: canvas.getWidth() / scaleData.horizontalUnits,
+        vertical: canvas.getHeight() / scaleData.verticalUnits
+    };
 
+    addCanvasObjects(units, gameObject.planes, 'plane', scaleData.plane);
+    addCanvasObjects(units, gameObject.bullets, 'missile', scaleData.missile);
 }
 
 function getGame() {
