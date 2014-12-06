@@ -21,14 +21,14 @@ public class GameTest {
 
 	@Test
 	public void testToJsonWithChildObjects() {
-		ImmutableList<Player> players = ImmutableList.of(new Player(77, "bryk",
+		ImmutableList<Player> players = ImmutableList.of(new Player("bryk",
 				678, Team.BLUE));
 		ImmutableList<Plane> planes = ImmutableList.of();
 		ImmutableList<Bullet> bullets = ImmutableList.of();
 		Game game = new Game(players, planes, bullets);
 
 		assertEquals(
-				"{\"players\":[{\"id\":77,\"nickName\":\"bryk\",\"points\":678"
+				"{\"players\":[{\"nickName\":\"bryk\",\"points\":678"
 		        + ",\"team\":\"BLUE\"}],\"planes\":[],\"bullets\":[]}",
 				game.toJson().toString());
 	}

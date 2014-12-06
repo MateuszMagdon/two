@@ -11,7 +11,7 @@ public final class ChangeRequest {
 	/**
 	 * The id of a player that sends the request.
 	 */
-	private final int playerId;
+	private final String player;
 	
 	/**
 	 * Direction change started - turning left, right or not at all.
@@ -24,8 +24,8 @@ public final class ChangeRequest {
 	 */
 	private final boolean firingEnabled;
 
-	public ChangeRequest(int playerId, Turn directionDelta, boolean shotFired) {
-		this.playerId = playerId;
+	public ChangeRequest(String player, Turn directionDelta, boolean shotFired) {
+		this.player = player;
 		this.directionDelta = directionDelta;
 		this.firingEnabled = shotFired;
 	}
@@ -38,7 +38,7 @@ public final class ChangeRequest {
 		return firingEnabled;
 	}
 
-	public int getPlayerId() {
-		return playerId;
+	public String getPlayer() {
+		return player;
 	}
 }
