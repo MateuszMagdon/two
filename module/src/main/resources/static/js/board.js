@@ -17,7 +17,7 @@
                 _self.group = data.group;
                 _self.canvas = setUpBoard(_self.boardHeight, _self.boardWidth);
 
-                updateCanvas(_self.canvas, _self.scaleData, game);
+                updateCanvas(_self.canvas, _self.scaleData, _self.login, game);
             });
 
             $rootScope.$on("disconnected", function() {
@@ -42,6 +42,17 @@ function getScaleData() {
             width: 320,
             height: 640
         }
+    }
+}
+
+function getImages() {
+    return {
+        plane: {
+            red: document.getElementById('planeRed'),
+            blue: document.getElementById('planeBlue'),
+            player: document.getElementById('planePlayer')
+        },
+        bullet: document.getElementById('missile')
     }
 }
 
@@ -74,24 +85,25 @@ function setUpBoard(height, width) {
     return canvas
 }
 
-function updateCanvas(canvas, scaleData, gameObject) {
-    function addCanvasObjects(units, gameObjects, pictureName, scale) {
+function updateCanvas(canvas, scaleData, login, gameObject) {
+
+    function addCanvasObjects(units, canvasObjects, images, scale, isPlanes) {
         var scaleX = getScale(units.horizontal, scale.widthInUnits, scale.width);
         var scaleY = getScale(units.vertical, scale.heightInUnits, scale.height);
-        var picture = document.getElementById(pictureName);
 
-        for (var index = 0; index < gameObjects.length; ++index) {
-            var gameObject = gameObjects[index];
+        for (var index = 0; index < canvasObjects.length; ++index) {
+            var ufo = canvasObjects[index];
+            var picture = getPicture(ufo, images, isPlanes);
 
-            var image = (new fabric.Image(picture, {
-                left: gameObject.x,
-                top: gameObject.y,
+            var canvasImage = (new fabric.Image(picture, {
+                left: ufo.x,
+                top: ufo.y,
                 scaleX: scaleX,
                 scaleY: scaleY,
-                angle: gameObject.direction
+                angle: ufo.direction
             }));
 
-            canvas.add(image);
+            canvas.add(canvasImage);
         }
     }
 
@@ -100,15 +112,32 @@ function updateCanvas(canvas, scaleData, gameObject) {
         return desiredSize / currentSizeInPixels;
     }
 
+    function getPicture(gameObject, images, isPlanes) {
+        if (!isPlanes) {
+            return images.bullet;
+        }
+
+        if (gameObject.player.nickName == login) {
+            return images.plane.player;
+        }
+
+        if (gameObject.player.team == "RED") {
+            return images.plane.red;
+        }
+
+        return images.plane.blue;
+    }
+
     canvas.clear();
 
+    var images = getImages();
     var units = {
         horizontal: canvas.getWidth() / scaleData.horizontalUnits,
         vertical: canvas.getHeight() / scaleData.verticalUnits
     };
 
-    addCanvasObjects(units, gameObject.planes, 'plane', scaleData.plane);
-    addCanvasObjects(units, gameObject.bullets, 'missile', scaleData.missile);
+    addCanvasObjects(units, gameObject.planes, images, scaleData.plane, true);
+    addCanvasObjects(units, gameObject.bullets, images, scaleData.missile, false);
 }
 
 function getGame() {
