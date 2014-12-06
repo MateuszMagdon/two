@@ -1,4 +1,4 @@
-function setUpBoard() {
+function setUpBoard(changeRequestService) {
     // to make Objects rotate around center - not top-left corner
     fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
     // no object is selectable
@@ -42,7 +42,6 @@ function setUpBoard() {
     };
 
     function refresh(newVals) {
-        console.log(newVals);
         for (var i = 0 ; i < elements.length ; ++i) {
             var element = elements[i];
             var config = newVals[element.elementId];
@@ -76,15 +75,15 @@ function setUpBoard() {
     $(document).keydown(function(e) {
         var a = plane.getAngle();
         switch(e.which) {
-            case 37:
-                plane.setAngle(a - 5);
-                canvas.renderAll(); // if not set will be painted after another action on canvas
+            case 37: // Left arrow
+            	changeRequestService.turnLeft();
                 break;
-            case 39:
-                plane.setAngle(a + 5);
-                canvas.renderAll();
+            case 39: // Right arrow
+            	changeRequestService.turnRight();
                 break;
-
+            case 32: // Space
+            	changeRequestService.fire();
+                break;
             default: return;
         }
         e.preventDefault(); // prevent the default action (scroll / move caret)
@@ -95,7 +94,8 @@ function setUpBoard() {
 
 (function() {
     var app = angular.module('app')
-        .controller('gameController', ["$scope", "$rootScope", "vertxEventBus", "vertxEventBusService", function ($scope, $rootScope, vertxEventBus, vertxEventBusService) {
+        .controller('gameController', ["$scope", "$rootScope", "vertxEventBus", "vertxEventBusService", "changeRequestService",
+                                       function ($scope, $rootScope, vertxEventBus, vertxEventBusService, changeRequestService) {
             var _self = this;
             _self.logged = false;
 
@@ -104,7 +104,7 @@ function setUpBoard() {
             $rootScope.$on("logged", function() {
                 _self.logged = true;
 
-                _self.canvas = setUpBoard();
+                _self.canvas = setUpBoard(changeRequestService);
 
                 _self.canvas.setWidth(800);
                 _self.canvas.setHeight(600);
