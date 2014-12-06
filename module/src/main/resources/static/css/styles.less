@@ -106,3 +106,44 @@ body {
     height: 70%;
     width: 100%;
 }
+
+#board {
+    position: absolute;
+    right: 30%;
+    top: 0;
+    bottom: 0;
+    width: 60%;
+    border-left: 2px solid forestgreen;
+}
+
+.canvas-container {
+    margin:0 auto ;
+}
+
+.boardImage {
+    display: none;
+}
+
+#loginContainer {
+    @import (inline) "vendor/bootstrap.css";
+    @import (inline) "vendor/select.css";
+
+    #loginForm {
+        margin-top: 100px;
+
+        #login {
+            display: inline-block;
+            width: 80%;
+            margin-right: 10px;
+        }
+
+        #group {
+            width: 80%;
+        }
+
+        .help-block {
+            display: inline-block;
+            margin: 0;
+        }
+    }
+}

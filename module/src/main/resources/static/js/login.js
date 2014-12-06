@@ -5,11 +5,11 @@
     var app = angular.module('app')
         .controller('loginController', ["$scope", "$rootScope", "vertxEventBus", "vertxEventBusService", function ($scope, $rootScope, vertxEventBus, vertxEventBusService) {
             var _self = this;
+            _self.available_groups = ["red", "blue"];
             _self.logged = false;
             _self.user = {login: "", group: "red"};
 
             _self.connect = function (user) {
-                //console.log("connect");
                 vertxEventBusService.send("connect", {'login': user.login, 'group': user.group}).then(function (reply) {
                     if (reply.status === 'ok') {
                         vertxEventBus.EventBus.prototype.sessionID = reply.sessionID;
