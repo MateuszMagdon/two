@@ -1,149 +1,152 @@
 body {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
+}
+
+
+#usersWrapper {
+  top: 0;
+  height: 30%;
+  position: absolute;
+  width: 100%;
+
+  .usersList {
+    height: 100%;
+
+    ul {
+      top: 49px;
+      bottom: 0;
+      overflow: auto;
+      position: absolute;
+    }
+
+    li {
+      padding: 5px 10px;
+      cursor: pointer;
+
+      &.red {
+        color: #F00;
+      }
+
+      &.blue {
+        color: #00F;
+      }
+    }
+  }
+}
+
+#chatWrapper {
+  bottom: 0;
+  position: absolute;
+  height: 70%;
+  width: 100%;
 }
 
 #chat {
-    position:absolute;
-    right: 0;
-    width: 30%;
-    bottom: 0;
-    top: 0;
-    padding-bottom: 30px;
-    border-left: 2px solid forestgreen;
-}
+  position: absolute;
+  right: 0;
+  width: 30%;
+  bottom: 0;
+  top: 0;
+  padding-bottom: 30px;
+  border-left: 2px solid forestgreen;
 
-#messageList {
-    overflow: auto;
-    top: 42px;
-    bottom: 29px;
-    position: absolute;
-}
-
-#messageList .normal {
-
-}
-
-#messageList .group {
-    color: forestgreen;
-}
-
-#messageList .whisper {
-    color: #F00;
-}
-
-#messageList .toWhisper {
-    color: #00F;
-}
-
-#chat h3 {
+  h3 {
     color: #FFF;
     text-transform: uppercase;
     background-color: forestgreen;
     padding: 10px;
     margin: 0;
-}
+  }
 
-.chatList {
-    list-style: none;
-    margin: 0 1% 0 2%;
-    padding: 0;
-    width: 97%;
-}
-
-.chatList li strong {
-    min-width: 30%;
-    text-align: right;
-    display: inline-block;
-}
-
-#chat #sendForm {
+  #sendForm {
     bottom: 0;
     position: absolute;
     left: 0;
-    right: 24px;
+    right: 0px;
+
+    input {
+      width: 100%;
+      padding: 5px 10px;
+    }
+  }
 }
 
-#chat #sendForm input {
-    width: 100%;
-    padding: 5px 10px;
-}
+#messageList {
+  overflow: auto;
+  top: 42px;
+  bottom: 29px;
+  position: absolute;
 
-.usersList ul {
-    top: 49px;
-    bottom: 0;
-    overflow: auto;
-    position: absolute;
-}
+  .normal {
 
-.usersList li {
-    padding: 5px 10px;
-    cursor: pointer;
-}
+  }
 
-.usersList li.Red {
+  .group {
+    color: forestgreen;
+  }
+
+  .whisper {
     color: #F00;
-}
+  }
 
-.usersList li.Blue {
+  .toWhisper {
     color: #00F;
+  }
 }
 
-#usersWrapper {
-    top: 0;
-    height: 30%;
-    position: absolute;
-    width: 100%;
-}
+.chatList {
+  list-style: none;
+  margin: 0 1% 0 2%;
+  padding: 0;
+  width: 97%;
 
-#usersWrapper .usersList {
-    height: 100%;
-}
-
-#chatWrapper {
-    bottom: 0;
-    position: absolute;
-    height: 70%;
-    width: 100%;
+  li strong {
+    min-width: 30%;
+    text-align: right;
+    display: inline-block;
+  }
 }
 
 #board {
-    position: absolute;
-    right: 30%;
-    top: 0;
-    bottom: 0;
-    width: 60%;
-    border-left: 2px solid forestgreen;
+  position: absolute;
+  right: 30%;
+  top: 0;
+  bottom: 0;
+  width: 60%;
+  border-left: 2px solid forestgreen;
 }
 
 .canvas-container {
-    margin:0 auto ;
+  margin: 0 auto;
 }
 
 .boardImage {
-    display: none;
+  display: none;
 }
 
 #loginContainer {
-    @import (inline) "vendor/bootstrap.css";
-    @import (inline) "vendor/select.css";
+  @import (inline) "vendor/bootstrap.css";
+  @import (inline) "vendor/select.css";
 
-    #loginForm {
-        margin-top: 100px;
+  #loginForm {
+    margin-top: 100px;
 
-        #login {
-            display: inline-block;
-            width: 80%;
-            margin-right: 10px;
-        }
-
-        #group {
-            width: 80%;
-        }
-
-        .help-block {
-            display: inline-block;
-            margin: 0;
-        }
+    #login {
+      display: inline-block;
+      width: 80%;
+      margin-right: 10px;
     }
+
+    #group {
+      width: 80%;
+    }
+
+    .help-block {
+      display: inline-block;
+      margin: 0;
+    }
+  }
 }
+
+
