@@ -45,7 +45,7 @@ public final class Plane extends GameObject<Plane> {
 
 	@Override
 	public Plane moveTo(float x, float y) {
-		return new Plane(getPlaneType(), getX(), getY(), getDirection(),
+		return new Plane(getPlaneType(), x, y, getDirection(),
 				getSpeed(), getPlayer(), getHealth(), getFiringEnabled(),
 				getLastFiredAt(), getTurn());
 	}

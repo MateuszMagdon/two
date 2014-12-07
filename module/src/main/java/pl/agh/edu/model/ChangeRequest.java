@@ -5,7 +5,7 @@ package pl.agh.edu.model;
  */
 public final class ChangeRequest {
 	
-	enum Turn{
+	public enum Turn{
 		LEFT,RIGHT,NONE;
 	}
 	/**

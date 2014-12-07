@@ -237,6 +237,11 @@ function setUpBoard(changeRequestService) {
                 _self.canvas.setWidth(width);
 
                 updateCanvas(_self.canvas, game);
+
+                vertxEventBusService.on("two.clients", function(gameUpdated) {
+                    game = gameUpdated;
+                    updateCanvas(_self.canvas, game);
+                });
             });
 
             $rootScope.$on("disconnected", function() {
