@@ -90,6 +90,10 @@ public class Simulator extends Verticle {
 
         //periodic task to broadcast game state every interval
         vertx.setPeriodic(50, timerID -> eb.publish("two.clients", game.toJson()));
+
+        eb.registerHandler("game.players", (Message<String> message) -> {
+           message.reply(GSON.toJson(game.getPlayers()));
+        });
     }
 
     private void removePlayer(String login) {
