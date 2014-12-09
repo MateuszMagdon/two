@@ -91,7 +91,7 @@ public class Simulator extends Verticle {
         eb.registerHandler("two.server", (Message<String> message) -> {
         		ChangeRequest change = GSON.fromJson(message.body(), ChangeRequest.class);
         		//logger.debug("Received update from player: " + change.getPlayer());   		
-        		game = new Game(game.getPlayers(), aplyChangeOnPlane(change,game.getPlanes()), game.getBullets());
+        		game = new Game(game.getPlayers(), applyChangeOnPlane(change,game.getPlanes()), game.getBullets());
         });
 
         //periodic task to broadcast game state every interval
@@ -99,7 +99,7 @@ public class Simulator extends Verticle {
     }
 
     
-    private ImmutableList<Plane> aplyChangeOnPlane(ChangeRequest change,ImmutableList<Plane> planes){
+    private ImmutableList<Plane> applyChangeOnPlane(ChangeRequest change,ImmutableList<Plane> planes){
     	ImmutableList.Builder<Plane> planeBuilder = new ImmutableList.Builder<>();
     	for (Plane p : planes){
     		if (p.getPlayer().getNickName().equals(change.getPlayer())){
