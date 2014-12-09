@@ -88,8 +88,8 @@ public class Simulator extends Verticle {
         eb.registerHandler("client.disconnected", (Message<JsonObject> message) -> removePlayer(message.body().getString("login")));
 
         //handler to receive updates from clients
-        eb.registerHandler("two.server", (Message<String> message) -> {
-        		ChangeRequest change = GSON.fromJson(message.body(), ChangeRequest.class);
+        eb.registerHandler("two.server", (Message<JsonObject> message) -> {
+        		ChangeRequest change = GSON.fromJson(message.body().toString(), ChangeRequest.class);
         		//logger.debug("Received update from player: " + change.getPlayer());   		
         		game = new Game(game.getPlayers(), applyChangeOnPlane(change,game.getPlanes()), game.getBullets());
         });
@@ -98,7 +98,7 @@ public class Simulator extends Verticle {
         vertx.setPeriodic(50, timerID -> eb.publish("two.clients", game.toJson()));
 
         eb.registerHandler("game.players", (Message<String> message) -> {
-           message.reply(GSON.toJson(game.getPlayers()));
+            message.reply(GSON.toJson(game.getPlayers()));
         });
     }
 
@@ -168,6 +168,16 @@ public class Simulator extends Verticle {
 
             logger.trace("Moving plane from " + plane.getX() + "," + plane.getY() + " to " + newX + ", " + newY);
             Plane element = plane.moveTo(newX, newY);
+
+            if(element.getTurn() != ChangeRequest.Turn.NONE) {
+                float howMuch = element.getPlaneType().getTurnDigreesPerInterval()*delta;
+                if(element.getTurn() == ChangeRequest.Turn.LEFT) {
+                    element = element.changeDirection(-howMuch);
+                } else {
+                    element = element.changeDirection(howMuch);
+                }
+            }
+
             planeBuilder.add(element);
         }
         return planeBuilder.build();

@@ -17,14 +17,14 @@ public abstract class GameObject<T> {
 	/**
 	 * Direction in degrees from north. In right hand side direction.
 	 */
-	private final int direction;
+	private final float direction;
 
 	/**
 	 * The number of distance units traveled per server time interval.
 	 */
 	private final float speed;
 
-	public GameObject(float x, float y, int direction, float speed) {
+	public GameObject(float x, float y, float direction, float speed) {
 		this.x = x;
 		this.y = y;
 		this.direction = direction;
@@ -39,7 +39,7 @@ public abstract class GameObject<T> {
 		return y;
 	}
 
-	public int getDirection() {
+	public float getDirection() {
 		return direction;
 	}
 
@@ -55,5 +55,5 @@ public abstract class GameObject<T> {
 	/**
 	 * Returns new plane instance with direction degrees added.
 	 */
-	public abstract T changeDirection(int degreesToAdd);
+	public abstract T changeDirection(float degreesToAdd);
 }
