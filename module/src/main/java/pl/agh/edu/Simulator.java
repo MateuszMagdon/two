@@ -1,22 +1,29 @@
 package pl.agh.edu;
 
+import static com.google.common.collect.Iterables.filter;
+
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-import pl.agh.edu.model.*;
+import pl.agh.edu.model.Bullet;
+import pl.agh.edu.model.ChangeRequest;
+import pl.agh.edu.model.Game;
+import pl.agh.edu.model.Map;
+import pl.agh.edu.model.Plane;
+import pl.agh.edu.model.PlaneTypes;
+import pl.agh.edu.model.Player;
+import pl.agh.edu.model.Team;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
-
-import static com.google.common.collect.Iterables.filter;
 
 /**
  * Created by Michal
@@ -83,15 +90,29 @@ public class Simulator extends Verticle {
         //handler to receive updates from clients
         eb.registerHandler("two.server", (Message<String> message) -> {
         		ChangeRequest change = GSON.fromJson(message.body(), ChangeRequest.class);
-        		logger.debug("Update from player: " + change.getPlayer() + "appended.");
-        		
-        		//TO DO apply changeRequest to createNewGame
+        		//logger.debug("Received update from player: " + change.getPlayer());   		
+        		game = new Game(game.getPlayers(), aplyChangeOnPlane(change,game.getPlanes()), game.getBullets());
         });
 
         //periodic task to broadcast game state every interval
         vertx.setPeriodic(50, timerID -> eb.publish("two.clients", game.toJson()));
     }
 
+    
+    private ImmutableList<Plane> aplyChangeOnPlane(ChangeRequest change,ImmutableList<Plane> planes){
+    	ImmutableList.Builder<Plane> planeBuilder = new ImmutableList.Builder<>();
+    	for (Plane p : planes){
+    		if (p.getPlayer().getNickName().equals(change.getPlayer())){
+    			Plane plane = p.handleChangeRequest(change);
+    			planeBuilder.add(plane);
+    		}
+    		else{
+    			planeBuilder.add(p);
+    		}
+    	}
+    	return planeBuilder.build();
+    }
+    
     private void removePlayer(String login) {
         game = new Game(removePlayerFromListByLogin(login), removePlaneFromListByPlayerLogin(login), game.getBullets());
     }
