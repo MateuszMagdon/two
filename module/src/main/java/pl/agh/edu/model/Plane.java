@@ -31,7 +31,7 @@ public final class Plane extends GameObject<Plane> {
 
 	private final ChangeRequest.Turn turn;
 
-	public Plane(PlaneType planeType, float x, float y, int direction,
+	public Plane(PlaneType planeType, float x, float y, float direction,
 			float speed, Player player, int health, boolean firingEnabled,
 			long lastFiredAt, ChangeRequest.Turn turn) {
 		super(x, y, direction, speed);
@@ -54,7 +54,7 @@ public final class Plane extends GameObject<Plane> {
 	 * To calculate degreesToAdd use PlaneType.turnDigreesPerInterval and turn values
 	 */
 	@Override
-	public Plane changeDirection(int degreesToAdd) {
+	public Plane changeDirection(float degreesToAdd) {
 		return new Plane(getPlaneType(), getX(), getY(), getDirection()
 				+ degreesToAdd, getSpeed(), getPlayer(), getHealth(),
 				getFiringEnabled(), getLastFiredAt(), getTurn());

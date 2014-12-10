@@ -19,7 +19,7 @@ public final class Bullet extends GameObject<Bullet> {
 	 */
 	private final Weapon weapon;
 
-	public Bullet(float x, float y, int direction, float startPositionX,
+	public Bullet(float x, float y, float direction, float startPositionX,
 			float startPositionY, Weapon weapon) {
 		super(x, y, direction, weapon.getBulletSpeed());
 		this.startPositionX = startPositionX;
@@ -46,7 +46,7 @@ public final class Bullet extends GameObject<Bullet> {
 	}
 
 	@Override
-	public Bullet changeDirection(int degreesToAdd) {
+	public Bullet changeDirection(float degreesToAdd) {
 		return new Bullet(getX(), getY(), getDirection() + degreesToAdd,
 				getStartPositionX(), getStartPositionY(), getWeapon());
 	}

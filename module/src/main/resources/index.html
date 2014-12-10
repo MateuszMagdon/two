@@ -29,8 +29,8 @@
 
     <script src="resources/static/js/login.js" type="application/javascript"></script>
     <script src="resources/static/js/chat.js" type="application/javascript"></script>
-    <script src="resources/static/js/board.js" type="application/javascript"></script>
     <script src="resources/static/js/changeRequestService.js"></script>
+    <script src="resources/static/js/board.js" type="application/javascript"></script>
 </head>
 <body>
 <div id="chat" data-ng-controller="chatController as cnt" data-ng-show="cnt.logged">
@@ -68,7 +68,9 @@
     <canvas id="gameVisualisation">
         Your browser does not support Canvas element. Shame on you!
     </canvas>
-    <img src="resources/static/img/fighter.png" id="plane" class="boardImage" />
+    <img src="resources/static/img/fighter_red.png" id="planeRed" class="boardImage" />
+    <img src="resources/static/img/fighter_blue.png" id="planeBlue" class="boardImage" />
+    <img src="resources/static/img/fighter_player.png" id="planePlayer" class="boardImage" />
     <img src="resources/static/img/missile.png" id="missile" class="boardImage" />
 </div>
 

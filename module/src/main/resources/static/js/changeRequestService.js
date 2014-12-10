@@ -18,6 +18,12 @@ angular.module('app').service(
 		// Listen to login/logout changes.
 		$rootScope.$on('logged', function(event, userInfo) {
 			loggedUserLogin = userInfo.login;
+
+			request = {
+				player: loggedUserLogin,
+				directionDelta: 'NONE',
+				firingEnabled: false
+			};
 		});
 	
 		$rootScope.$on('disconnected', function() {
@@ -31,17 +37,16 @@ angular.module('app').service(
 			}
 			return vertxEventBusService.send(vertxAddress, object);
 		};
+
+		var request;
 		
 		/**
 		 * Sends left turn change request.
 		 * @return {!angular.$q.Promise}
 		 */
 		this.turnLeft = function() {
-			return sendRequest({
-				player: loggedUserLogin,
-				directionDelta: 'LEFT',
-				firingEnabled: false
-			});
+			request.directionDelta = 'LEFT';
+			return sendRequest(request);
 		};
 		
 		/**
@@ -49,11 +54,17 @@ angular.module('app').service(
 		 * @return {!angular.$q.Promise}
 		 */
 		this.turnRight = function() {
-			return sendRequest({
-				player: loggedUserLogin,
-				directionDelta: 'RIGHT',
-				firingEnabled: false
-			});
+			request.directionDelta = 'RIGHT';
+			return sendRequest(request);
+		};
+
+		/**
+		 * Sends none turn change request.
+		 * @return {!angular.$q.Promise}
+		 */
+		this.endTurn = function() {
+			request.directionDelta = 'NONE';
+			return sendRequest(request);
 		};
 		
 		/**
@@ -61,11 +72,17 @@ angular.module('app').service(
 		 * @return {!angular.$q.Promise}
 		 */
 		this.fire = function() {
-			return sendRequest({
-				player: loggedUserLogin,
-				directionDelta: 'NONE',
-				firingEnabled: true
-			});
+			request.firingEnabled = true;
+			return sendRequest(request);
+		};
+
+		/**
+		 * Sends end fire change request.
+		 * @return {!angular.$q.Promise}
+		 */
+		this.endFire = function() {
+			request.firingEnabled = false;
+			return sendRequest(request);
 		};
 	}
 );
