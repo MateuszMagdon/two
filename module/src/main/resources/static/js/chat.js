@@ -26,6 +26,7 @@
 
             $scope.send = function () {
                 var address = 'chat.message';
+                message.from = user.name;
                 if (message.message.indexOf('/whisper ') == 0) {
                     message.message = message.message.substring(9);
                     var to = message.message.substring(0, message.message.indexOf(' '));
@@ -33,7 +34,6 @@
                     address = 'chat.message.' + to;
                     message.class = "toWhisper";
                     message.date = new Date();
-                    message.from = user.name;
 
                     var cloned = {};
                     angular.copy(message, cloned);

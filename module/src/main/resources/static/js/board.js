@@ -1,6 +1,6 @@
-(function() {
+(function () {
     var app = angular.module('app')
-        .controller('gameController', ["$scope", "$rootScope", "vertxEventBus", "vertxEventBusService", function ($scope, $rootScope, vertxEventBus, vertxEventBusService) {
+        .controller('gameController', ["$scope", "$rootScope", "vertxEventBus", "vertxEventBusService", "changeRequestService", function ($scope, $rootScope, vertxEventBus, vertxEventBusService, changeRequestService) {
             var _self = this;
             var game = getGame();
             var board = $("#board");
@@ -11,16 +11,21 @@
             _self.boardWidth = board.width();
             _self.scaleData = getScaleData();
 
-            $rootScope.$on("logged", function(event, data) {
+            $rootScope.$on("logged", function (event, data) {
                 _self.logged = true;
                 _self.login = data.login;
                 _self.group = data.group;
-                _self.canvas = setUpBoard(_self.boardHeight, _self.boardWidth);
+                _self.canvas = setUpBoard(_self.boardHeight, _self.boardWidth, changeRequestService);
 
                 updateCanvas(_self.canvas, _self.scaleData, _self.login, game);
+
+                vertxEventBusService.on("two.clients", function (gameUpdated) {
+                    game = gameUpdated;
+                    updateCanvas(_self.canvas, _self.scaleData, _self.login, game);
+                });
             });
 
-            $rootScope.$on("disconnected", function() {
+            $rootScope.$on("disconnected", function () {
                 _self.logged = false;
             });
         }]);
@@ -65,22 +70,51 @@ function setUpBoard(height, width, changeRequestService) {
     canvas.setHeight(height);
     canvas.setWidth(width);
 
-    //$(document).keydown(function(e) {
-    //    var a = plane.getAngle();
-    //    switch(e.which) {
-    //        case 37:
-    //            plane.setAngle(a - 5);
-    //            canvas.renderAll(); // if not set will be painted after another action on canvas
-    //            break;
-    //        case 39:
-    //            plane.setAngle(a + 5);
-    //            canvas.renderAll();
-    //            break;
-    //
-    //        default: return;
-    //    }
-    //    e.preventDefault(); // prevent the default action (scroll / move caret)
-    //});
+    // prevent form flood server by events
+    var keyDisAllowed = [];
+
+    $(document).keydown(function (e) {
+        if (!$('#msg').is(':focus')) {
+
+            if (keyDisAllowed[e.which] === true) return;
+            keyDisAllowed[e.which] = true;
+
+            switch (e.which) {
+                case 37: // Left arrow
+                    changeRequestService.turnLeft();
+                    break;
+                case 39: // Right arrow
+                    changeRequestService.turnRight();
+                    break;
+                case 32: // Space
+                    changeRequestService.fire();
+                    break;
+                default:
+                    return;
+            }
+            e.preventDefault(); // prevent the default action (scroll / move caret)
+        }
+    });
+
+    $(document).keyup(function (e) {
+        if (!$('#msg').is(':focus')) {
+            keyDisAllowed[e.which] = false;
+            switch (e.which) {
+                case 37: // Left arrow
+                    changeRequestService.endTurn();
+                    break;
+                case 39: // Right arrow
+                    changeRequestService.endTurn();
+                    break;
+                case 32: // Space
+                    changeRequestService.endFire();
+                    break;
+                default:
+                    return;
+            }
+            e.preventDefault(); // prevent the default action (scroll / move caret)
+        }
+    });
 
     return canvas
 }
@@ -142,98 +176,98 @@ function updateCanvas(canvas, scaleData, login, gameObject) {
 
 function getGame() {
     return {
-        "players" : [{
-            "id" : 1,
-            "nickName" : "player1",
-            "points" : 0,
-            "team" : "BLUE"
+        "players": [{
+            "id": 1,
+            "nickName": "player1",
+            "points": 0,
+            "team": "BLUE"
         }, {
-            "id" : 2,
-            "nickName" : "player2",
-            "points" : 123,
-            "team" : "RED"
+            "id": 2,
+            "nickName": "player2",
+            "points": 123,
+            "team": "RED"
         }
         ],
-        "planes" : [{
-            "player" : {
-                "id" : 1,
-                "nickName" : "player1",
-                "points" : 0,
-                "team" : "BLUE"
+        "planes": [{
+            "player": {
+                "id": 1,
+                "nickName": "player1",
+                "points": 0,
+                "team": "BLUE"
             },
-            "planeType" : {
-                "weapon" : {
-                    "name" : "name",
-                    "range" : 10.0,
-                    "damage" : 1,
-                    "bulletSpeed" : 2.0,
-                    "minTimeBetweenShots" : 4
+            "planeType": {
+                "weapon": {
+                    "name": "name",
+                    "range": 10.0,
+                    "damage": 1,
+                    "bulletSpeed": 2.0,
+                    "minTimeBetweenShots": 4
                 },
-                "turnDigreesPerInterval" : 12
+                "turnDigreesPerInterval": 12
             },
-            "health" : 1,
-            "firingEnabled" : false,
-            "lastFiredAt" : 1,
-            "turn" : "LEFT",
-            "x" : 100.0,
-            "y" : 200.0,
-            "direction" : 123,
-            "speed" : 1.0
+            "health": 1,
+            "firingEnabled": false,
+            "lastFiredAt": 1,
+            "turn": "LEFT",
+            "x": 100.0,
+            "y": 200.0,
+            "direction": 123,
+            "speed": 1.0
         }, {
-            "player" : {
-                "id" : 2,
-                "nickName" : "player2",
-                "points" : 123,
-                "team" : "RED"
+            "player": {
+                "id": 2,
+                "nickName": "player2",
+                "points": 123,
+                "team": "RED"
             },
-            "planeType" : {
-                "weapon" : {
-                    "name" : "name",
-                    "range" : 10.0,
-                    "damage" : 1,
-                    "bulletSpeed" : 2.0,
-                    "minTimeBetweenShots" : 4
+            "planeType": {
+                "weapon": {
+                    "name": "name",
+                    "range": 10.0,
+                    "damage": 1,
+                    "bulletSpeed": 2.0,
+                    "minTimeBetweenShots": 4
                 },
-                "turnDigreesPerInterval" : 12
+                "turnDigreesPerInterval": 12
             },
-            "health" : 1,
-            "firingEnabled" : true,
-            "lastFiredAt" : 1,
-            "turn" : "RIGHT",
-            "x" : 721.0,
-            "y" : 221.0,
-            "direction" : 2,
-            "speed" : 4.0
+            "health": 1,
+            "firingEnabled": true,
+            "lastFiredAt": 1,
+            "turn": "RIGHT",
+            "x": 721.0,
+            "y": 221.0,
+            "direction": 2,
+            "speed": 4.0
         }
         ],
-        "bullets" : [{
-            "startPositionX" : 1.0,
-            "startPositionY" : 2.0,
-            "weapon" : {
-                "name" : "name",
-                "range" : 10.0,
-                "damage" : 1,
-                "bulletSpeed" : 2.0,
-                "minTimeBetweenShots" : 4
+        "bullets": [{
+            "startPositionX": 1.0,
+            "startPositionY": 2.0,
+            "weapon": {
+                "name": "name",
+                "range": 10.0,
+                "damage": 1,
+                "bulletSpeed": 2.0,
+                "minTimeBetweenShots": 4
             },
-            "x" : 108.0,
-            "y" : 256.0,
-            "direction" : 123,
-            "speed" : 2.0
+            "x": 108.0,
+            "y": 256.0,
+            "direction": 123,
+            "speed": 2.0
         }, {
-            "startPositionX" : 12.0,
-            "startPositionY" : 2.0,
-            "weapon" : {
-                "name" : "name",
-                "range" : 10.0,
-                "damage" : 1,
-                "bulletSpeed" : 2.0,
-                "minTimeBetweenShots" : 4
+            "startPositionX": 12.0,
+            "startPositionY": 2.0,
+            "weapon": {
+                "name": "name",
+                "range": 10.0,
+                "damage": 1,
+                "bulletSpeed": 2.0,
+                "minTimeBetweenShots": 4
             },
-            "x" : 11.0,
-            "y" : 212.0,
-            "direction" : 1,
-            "speed" : 2.0
+            "x": 11.0,
+            "y": 212.0,
+            "direction": 1,
+            "speed": 2.0
         }
         ]
     };
