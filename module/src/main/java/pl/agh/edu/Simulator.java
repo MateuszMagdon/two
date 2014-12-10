@@ -59,7 +59,8 @@ public class Simulator extends Verticle {
 
             // update positions
             ImmutableList<Plane> planes = updatePlanePositions(game.getPlanes());
-
+            CollisionDetector collisionDetector = new CollisionDetector();
+            planes = collisionDetector.collidePlanes(planes);
             // detect collisions
 
             // make changes according to keys
