@@ -5,9 +5,12 @@ public class PlaneType {
 	
 	private final int turnDigreesPerInterval;
 
-	public PlaneType(Weapon weapon, int turnDigreesPerInterval) {
+	private final float speed;
+
+	public PlaneType(Weapon weapon, int turnDigreesPerInterval, float speed) {
 		this.weapon = weapon;
 		this.turnDigreesPerInterval = turnDigreesPerInterval;
+		this.speed = speed;
 	}
 	
 	public Weapon getWeapon() {
@@ -16,5 +19,9 @@ public class PlaneType {
 
 	public int getTurnDigreesPerInterval() {
 		return turnDigreesPerInterval;
+	}
+
+	public float getSpeed() {
+		return speed;
 	}
 }

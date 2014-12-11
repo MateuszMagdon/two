@@ -36,7 +36,9 @@ public class BridgeServer extends Verticle {
 
         JsonArray inboundPermitted = new JsonArray();
         inboundPermitted.add(new JsonObject().putString("address", "connect"))
+                .add(new JsonObject().putString("address", "two.server"))
                 .add(new JsonObject().putString("address", "disconnect").putBoolean("requires_auth", true))
+                .add(new JsonObject().putString("address", "game.players").putBoolean("requires_auth", true))
                 .add(new JsonObject().putString("address_re", "chat.message.*").putBoolean("requires_auth", true));
 
         JsonArray outboundPermitted = new JsonArray();

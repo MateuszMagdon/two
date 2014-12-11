@@ -25,119 +25,12 @@
 
     <script type="application/javascript">
         var app = angular.module('app', ['knalli.angular-vertxbus', "ui.select", "ui.bootstrap.showErrors"]);
-
-        app.controller('chatController', ["$scope", "$rootScope", "vertxEventBusService", function ($scope, $rootScope, vertxEventBusService) {
-            var _self = this;
-            var username = "czesław";
-            var group = "red";
-            var users = [
-                {username: "czesio", team: "Red"},
-                {username: "wiesio", team: "Red"},
-                {username: "stasia", team: "Blue"}
-            ];
-
-            var eb = vertxEventBusService;
-            var g_messages = [];
-            var chat_scope = null;
-            _self.logged = false;
-
-
-            var createEmptyMessage = function () {
-                return {from: username, message: "", class: "normal", date: null};
-            };
-
-            function scrollChatWindow() {
-                var $messageList = $('#messageList');
-                $messageList.scrollTop($messageList.find('ul').height());
-            }
-
-            this.messages = g_messages;
-            var message = $scope.message = createEmptyMessage();
-            chat_scope = $scope;
-
-            $scope.users = users;
-
-            $scope.send = function () {
-                var address = 'chat.message';
-                if (message.message.indexOf('/whisper ') == 0) {
-                    message.message = message.message.substring(9);
-                    var to = message.message.substring(0, message.message.indexOf(' '));
-                    message.message = message.message.substring(message.message.indexOf(' '));
-                    address = 'chat.message.' + to;
-                    message.class = "toWhisper";
-                    message.date = new Date();
-
-                    var cloned = {};
-                    angular.copy(message, cloned);
-                    cloned.from = "Whisper to: " + to;
-                    g_messages.push(cloned);
-                }
-
-                if (message.message.indexOf('/group') == 0) {
-                    message.message = message.message.substring(6);
-                    address = 'chat.message.' + group;
-                }
-
-                eb.publish(address, message);
-                $scope.message = message = createEmptyMessage();
-                setTimeout(function() { // hack :/
-                    scrollChatWindow();
-                }, 10);
-            };
-
-            $scope.usernameClicked = function (user) {
-                message.message = '/whisper ' + user.username + ' ';
-                $('#msg').focus();
-            }
-
-            var handleMsg = function (msg) {
-                msg.date = new Date();
-                g_messages.push(msg);
-                chat_scope.$apply();
-                scrollChatWindow();
-            };
-
-            eb.addListener("chat.message", function (msg) {
-                handleMsg(msg);
-            });
-
-            eb.addListener("chat.message." + username, function (msg) {
-                msg.class = "whisper";
-                handleMsg(msg);
-            });
-
-            eb.addListener("chat.message." + group, function (msg) {
-                msg.class = "group";
-                handleMsg(msg);
-            });
-
-            $rootScope.$on("logged", function() {
-                _self.logged = true;
-            });
-
-            $rootScope.$on("disconnected", function() {
-                _self.logged = false;
-            });
-        }]);
-
-
-        $(document).ready(function () {
-            $(window).keyup(function (event) {
-                var msgInput = $('#msg');
-                if (event.keyCode == 84) {
-                    msgInput.focus();
-                }
-
-                if (event.keyCode == 27 && msgInput.is(":focus")) {
-                    msgInput.blur();
-                }
-            });
-        });
     </script>
 
     <script src="resources/static/js/login.js" type="application/javascript"></script>
-    <script src="resources/static/js/board.js" type="application/javascript"></script>
+    <script src="resources/static/js/chat.js" type="application/javascript"></script>
     <script src="resources/static/js/changeRequestService.js"></script>
+    <script src="resources/static/js/board.js" type="application/javascript"></script>
 </head>
 <body>
 <div id="chat" data-ng-controller="chatController as cnt" data-ng-show="cnt.logged">
@@ -145,8 +38,8 @@
         <div class="usersList">
             <h3>Users</h3>
             <ul class="chatList">
-                <li data-ng-repeat="user in users" ng-click="usernameClicked(user)" class="{{ user.team }}">{{
-                    user.username }} ({{ user.team }})
+                <li data-ng-repeat="user in users track by $index" ng-click="usernameClicked(user)" class="{{ user.team | lowercase }}">
+                    {{ user.nickName }} ({{ user.points }})
                 </li>
             </ul>
         </div>
@@ -175,7 +68,9 @@
     <canvas id="gameVisualisation">
         Your browser does not support Canvas element. Shame on you!
     </canvas>
-    <img src="resources/static/img/fighter.png" id="plane" class="boardImage" />
+    <img src="resources/static/img/fighter_red.png" id="planeRed" class="boardImage" />
+    <img src="resources/static/img/fighter_blue.png" id="planeBlue" class="boardImage" />
+    <img src="resources/static/img/fighter_player.png" id="planePlayer" class="boardImage" />
     <img src="resources/static/img/missile.png" id="missile" class="boardImage" />
 </div>
 
