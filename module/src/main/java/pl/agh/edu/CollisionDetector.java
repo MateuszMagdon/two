@@ -23,7 +23,7 @@ public class CollisionDetector {
         Middle firstMiddle = calculateMiddle(firstX, firstY, PLANE_WIDTH, PLANE_HEIGHT);
         Middle secondMiddle = calculateMiddle(secondX, secondY, PLANE_WIDTH, PLANE_HEIGHT);
 
-        final float radius = PLANE_WIDTH/2;
+        final float radius = PLANE_WIDTH/4;
 
         final float radiusSum = 2 * radius;
         final float dx = Math.abs(firstMiddle.x - secondMiddle.x);
@@ -49,7 +49,6 @@ public class CollisionDetector {
                 if(collision(plane,opponent)){
                     deadPlanes.add(opponent);
                     deadPlanes.add(plane);
-                    System.out.println("Collision detected!");
                 }
             }
         }
