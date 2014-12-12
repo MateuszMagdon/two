@@ -2,6 +2,8 @@ package pl.agh.edu;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import pl.agh.edu.model.Bullet;
+import pl.agh.edu.model.GameObject;
 import pl.agh.edu.model.Plane;
 import pl.agh.edu.model.Team;
 
@@ -13,7 +15,10 @@ public class CollisionDetector {
     private static final float PLANE_WIDTH = 53.25f;
     private static final float PLANE_HEIGHT = 74f;
 
-    public boolean collision(Plane first, Plane second){
+    private static final float BULLET_WIDTH = 30f;
+    private static final float BULLET_HEIGHT = 1f;
+
+    public <T extends GameObject,E extends GameObject> boolean collision(T first, E second, boolean same){
         float firstX = first.getX();
         float firstY = first.getY();
 
@@ -21,38 +26,63 @@ public class CollisionDetector {
         float secondY = second.getY();
 
         Middle firstMiddle = calculateMiddle(firstX, firstY, PLANE_WIDTH, PLANE_HEIGHT);
-        Middle secondMiddle = calculateMiddle(secondX, secondY, PLANE_WIDTH, PLANE_HEIGHT);
+        Middle secondMiddle = calculateMiddle(secondX, secondY, same
+                ? PLANE_WIDTH : BULLET_WIDTH,
+                same ? PLANE_HEIGHT : BULLET_HEIGHT);
 
-        final float radius = PLANE_WIDTH/4;
-
-        final float radiusSum = 2 * radius;
-        final float dx = Math.abs(firstMiddle.x - secondMiddle.x);
-        final float dy = Math.abs(secondMiddle.y - secondMiddle.y);
-
-        return radiusSum * radiusSum > (dx * dx + dy * dy);
+        final float radiusSum = (PLANE_WIDTH + (same ? PLANE_WIDTH : BULLET_WIDTH))/2;
+        final float dx = firstMiddle.x - secondMiddle.x;
+        final float dy = firstMiddle.y - secondMiddle.y;
+        return (radiusSum * radiusSum) > (dx * dx + dy * dy);
     }
 
     public Middle calculateMiddle(float x, float y, float width, float height){
         return new Middle(x + width / 2, y + height / 2);
     }
 
-    public ImmutableList<Plane> collidePlanes(ImmutableList<Plane> planes){
-        ImmutableSet.Builder<Plane> deadPlanes = new ImmutableSet.Builder<>();
-        for(Plane plane: planes){
-            Team planeTeam = plane.getPlayer().getTeam();
-            for(Plane opponent: planes){
-                Team oponentTeam = opponent.getPlayer().getTeam();
-                if(plane.equals(opponent) || planeTeam.equals(oponentTeam)
-                        || plane.getHealth() == 0 || opponent.getHealth() == 0){
-                    continue;
-                }
-                if(collision(plane,opponent)){
-                    deadPlanes.add(opponent);
-                    deadPlanes.add(plane);
+    public <T extends GameObject,E extends GameObject> ImmutableList<T> collidePlanes(ImmutableList<T> planes, ImmutableList<E> secondList){
+        ImmutableSet.Builder<T> deadPlanes = new ImmutableSet.Builder<>();
+        for(T plane: planes){
+            for(E opponent: secondList){
+                if(opponent instanceof Plane) {
+                    if (planeCollisionConditions((Plane)plane, (Plane)opponent)) {
+                        deadPlanes.add((T)opponent);
+                        deadPlanes.add(plane);
+                    }
+                }else{
+                    if(bulletCollisionConditions((Plane)plane, (Bullet)opponent)){
+                        deadPlanes.add(plane);
+                    }
                 }
             }
         }
         return mergeLists(planes, deadPlanes.build());
+    }
+
+    public boolean planeCollisionConditions(Plane plane, Plane opponent){
+
+        Team planeTeam = plane.getPlayer().getTeam();
+        Team oponentTeam = opponent.getPlayer().getTeam();
+        if(plane.equals(opponent) || planeTeam.equals(oponentTeam)
+                || plane.getHealth() == 0 || opponent.getHealth() == 0){
+            return false;
+        }
+        if(collision(plane,opponent, true)) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean bulletCollisionConditions(Plane plane, Bullet bullet){
+        Team planeTeam = plane.getPlayer().getTeam();
+        Team bulletTeam = bullet.getPlayer().getTeam();
+        if( planeTeam.equals(bulletTeam)){
+            return false;
+        }
+        if(collision(plane, bullet, false)){
+            return true;
+        }
+        return false;
     }
 
     public <T> ImmutableList<T> mergeLists(ImmutableList<T> all, ImmutableSet<T> dead){

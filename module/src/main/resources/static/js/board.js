@@ -134,7 +134,8 @@ function updateCanvas(canvas, scaleData, login, gameObject) {
                 top: ufo.y,
                 scaleX: scaleX,
                 scaleY: scaleY,
-                angle: ufo.direction
+                angle: ufo.direction,
+                centeredRotation: true
             }));
 
             canvas.add(canvasImage);

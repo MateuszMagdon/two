@@ -42,8 +42,8 @@ public class CollisionDetectorTest {
 
     @Test
     public void testCollision() throws Exception {
-        assertTrue(collisionDetector.collision(first, second));
-        assertFalse(collisionDetector.collision(third,second));
+        assertTrue(collisionDetector.collision(first, second, true));
+        assertFalse(collisionDetector.collision(third,second, true));
     }
 
     @Test
@@ -59,7 +59,7 @@ public class CollisionDetectorTest {
         ImmutableList.Builder<Plane> expectedResult = new ImmutableList.Builder<>();
         expectedResult.add(third);
         expectedResult.add(fourth);
-        assertEquals(expectedResult.build(), collisionDetector.collidePlanes(planes.build()));
+        assertEquals(expectedResult.build(), collisionDetector.collidePlanes(planes.build(), planes.build()));
     }
 
     @Test

@@ -4,10 +4,6 @@ package pl.agh.edu.model;
  * GameObject representing a plane a player is controlling.
  */
 public final class Plane extends GameObject<Plane> {
-	/**
-	 * The player that controls the plane.
-	 */
-	private final Player player;
 
 	/**
 	 * Static type of plane info
@@ -34,8 +30,7 @@ public final class Plane extends GameObject<Plane> {
 	public Plane(PlaneType planeType, float x, float y, float direction,
 			float speed, Player player, int health, boolean firingEnabled,
 			long lastFiredAt, ChangeRequest.Turn turn) {
-		super(x, y, direction, speed);
-		this.player = player;
+		super(x, y, direction, speed, player);
 		this.health = health;
 		this.planeType = planeType;
 		this.firingEnabled = firingEnabled;
@@ -96,10 +91,6 @@ public final class Plane extends GameObject<Plane> {
 	public Plane handleChangeRequest(ChangeRequest change) {
 		return turn(change.getDirectionDelta()).changeFiringState(
 				change.isFiringEnabled());
-	}
-
-	public Player getPlayer() {
-		return player;
 	}
 
 	public int getHealth() {
