@@ -124,7 +124,7 @@ public class Simulator extends Verticle {
 
     private void addPlayer(String login, String group) {
         Player player = new Player(login, 0, Team.valueOf(group.toUpperCase()));
-        Plane plane = new Plane(PlaneTypes.SNIPER.getPlaneType(), random.nextInt(map.getWidth()), random.nextInt(map.getHeight()), random.nextInt(360), PlaneTypes.STANDARD.getPlaneType().getSpeed(), player, 100, false, System.currentTimeMillis(), ChangeRequest.Turn.NONE);
+        Plane plane = new Plane(PlaneTypes.STANDARD.getPlaneType(), random.nextInt(map.getWidth()), random.nextInt(map.getHeight()), random.nextInt(360), PlaneTypes.STANDARD.getPlaneType().getSpeed(), player, PlaneTypes.STANDARD.getPlaneType().getHealth(), false, System.currentTimeMillis(), ChangeRequest.Turn.NONE);
 
         game = new Game(addToImmutableList(game.getPlayers(), player), addToImmutableList(game.getPlanes(), plane), game.getBullets());
     }
