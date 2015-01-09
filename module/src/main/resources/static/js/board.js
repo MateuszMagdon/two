@@ -160,6 +160,24 @@ function updateCanvas(canvas, scaleData, login, gameObject) {
         return images.plane.blue;
     }
 
+    function countAndSetTeamScores(gameObject){
+        var redScore = 0,
+            blueScore = 0,
+            playersCount = gameObject.players.length;
+
+        for (var i = 0; i < playersCount; i++) {
+            var player = gameObject.players[i];
+            if(player.team == "RED"){
+                redScore += player.points;
+            } else {
+                blueScore += player.points;
+            }
+        }
+
+        $('#red-team-score').text(redScore);
+        $('#blue-team-score').text(blueScore);
+    }
+
     canvas.clear();
 
     var images = getImages();
@@ -170,5 +188,7 @@ function updateCanvas(canvas, scaleData, login, gameObject) {
 
     addCanvasObjects(units, gameObject.planes, images, scaleData.plane, true);
     addCanvasObjects(units, gameObject.bullets, images, scaleData.missile, false);
+
+    countAndSetTeamScores(gameObject);
 }
 

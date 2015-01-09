@@ -64,6 +64,11 @@
     </div>
 </div>
 
+<div id="scores" class="team-scores-wrapper" data-ng-controller="gameController as cnt" data-ng-show="cnt.logged">
+    <div class="red-score">Red team: <div id="red-team-score" class="score"></div></div>
+    <div class="blue-score">Blue team: <div id="blue-team-score" class="score"></div></div>
+</div>
+
 <div id="board" data-ng-controller="gameController as cnt" data-ng-show="cnt.logged">
     <canvas id="gameVisualisation">
         Your browser does not support Canvas element. Shame on you!
