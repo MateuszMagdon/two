@@ -16,6 +16,7 @@ import pl.agh.edu.model.*;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 
 /**
@@ -34,6 +35,7 @@ public class Simulator extends Verticle {
     private static final Gson GSON = new Gson();
     private final Random random = new Random();
     private final Map map = Map.getMap();
+    CollisionDetector collisionDetector = null;
 
     public void start() {
         logger = container.logger();
@@ -77,10 +79,11 @@ public class Simulator extends Verticle {
             upadteDelta();
 
             ImmutableList<Plane> planes = updatePlanePositions(game.getPlanes());
-            CollisionDetector collisionDetector = new CollisionDetector();
-            planes = collisionDetector.collidePlanes(planes, planes);
-            planes = collisionDetector.collidePlanes(planes, game.getBullets());
+            collisionDetector = new CollisionDetector();
+            //planes = collisionDetector.collidePlanes(planes, planes);
+            //planes = collisionDetector.collidePlanes(planes, game.getBullets());
             
+            ImmutableSet<Plane> deadPlanes = collisionDetector.getDeadPlanes(planes, game.getBullets());
             game = new Game(game.getPlayers(), planes, game.getBullets());
             game = handleBulletBehaviour(game);
 
@@ -90,6 +93,17 @@ public class Simulator extends Verticle {
             // eb.publish("game.over", true);
             // eb.publish("game.information", "{winner: Player, gameTime: 10000, someting else?}");
         });
+    }
+    
+    
+    public <T> ImmutableList<T> mergeLists(ImmutableList<T> all, ImmutableSet<T> dead){
+        ImmutableList.Builder<T> planeList = new ImmutableList.Builder<>();
+        for(T t : all){
+            if( !dead.contains(t)){
+                planeList.add(t);
+            }
+        }
+        return planeList.build();
     }
 
     public Game createNewGame() {

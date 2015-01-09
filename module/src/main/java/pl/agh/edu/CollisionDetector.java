@@ -58,6 +58,30 @@ public class CollisionDetector {
         }
         return mergeLists(planes, deadPlanes.build());
     }
+    
+    
+    public ImmutableSet<Plane> getDeadPlanes(ImmutableList<Plane> planes, ImmutableList<Bullet> bullets){
+        ImmutableSet.Builder<Plane> deadPlanes = new ImmutableSet.Builder<>();
+        
+        for (Plane plane: planes){
+        	for (Plane opponent : planes){
+        		if (planeCollisionConditions(plane, opponent)) {
+                    deadPlanes.add(opponent);
+                    deadPlanes.add(plane);
+                }
+        	}
+        }
+        
+        for (Plane plane: planes){
+        	for (Bullet b : bullets){
+	        	if(bulletCollisionConditions(plane, b)){
+	                deadPlanes.add(plane);
+	            }
+        	}
+        }
+        return deadPlanes.build();
+    }
+    
 
     public boolean planeCollisionConditions(Plane plane, Plane opponent){
 
