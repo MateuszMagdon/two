@@ -7,19 +7,17 @@
 
             _self.logged = false;
             _self.canvas = null;
-            _self.boardHeight = board.height();
-            _self.boardWidth = board.width();
-            _self.scaleData = getScaleData();
 
             $rootScope.$on("logged", function (event, data) {
                 _self.logged = true;
                 _self.login = data.login;
                 _self.group = data.group;
-                _self.canvas = setUpBoard(_self.boardHeight, _self.boardWidth, changeRequestService);
+                _self.scaleData = getScaleData();
+                _self.canvas = setUpBoard(changeRequestService);
 
                 vertxEventBusService.on("two.clients", function (gameUpdated) {
                     game = gameUpdated;
-                    updateCanvas(_self.canvas, _self.scaleData, _self.login, game);
+                    updateCanvas(_self.canvas, _self.scaleData, _self.login, game, board);
                 });
             });
 
@@ -59,14 +57,12 @@ function getImages() {
     }
 }
 
-function setUpBoard(height, width, changeRequestService) {
+function setUpBoard(changeRequestService) {
     fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
     fabric.Object.prototype.selectable = false;
 
     var canvas = new fabric.Canvas('gameVisualisation');
     canvas.backgroundColor = 'rgb(255,255,255)';
-    canvas.setHeight(height);
-    canvas.setWidth(width);
 
     // prevent form flood server by events
     var keyDisAllowed = [];
@@ -117,7 +113,7 @@ function setUpBoard(height, width, changeRequestService) {
     return canvas
 }
 
-function updateCanvas(canvas, scaleData, login, gameObject) {
+function updateCanvas(canvas, scaleData, login, gameObject, board) {
 
     function addCanvasObjects(units, canvasObjects, images, scale, isPlanes) {
         var scaleX = getScale(units.horizontal, scale.widthInUnits, scale.width);
@@ -178,6 +174,8 @@ function updateCanvas(canvas, scaleData, login, gameObject) {
         $('#blue-team-score').text(blueScore);
     }
 
+    canvas.setHeight( board.height());
+    canvas.setWidth( board.width());
     canvas.clear();
 
     var images = getImages();
