@@ -1,8 +1,8 @@
 package pl.agh.edu.model;
 
 public enum PlaneTypes {
-	
-	STANDARD(new PlaneType(WeaponTypes.MACHINE_GUN.getWeapon(), 100, 180.f));
+	STANDARD(new PlaneType(WeaponTypes.MACHINE_GUN.getWeapon(), 90, 180.f, 100)),
+	SNIPER(new PlaneType(WeaponTypes.SNIPER.getWeapon(), 10, 50.f, 75));
 	
 	private PlaneType planeType;
 	

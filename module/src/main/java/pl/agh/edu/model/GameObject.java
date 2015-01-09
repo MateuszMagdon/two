@@ -24,11 +24,17 @@ public abstract class GameObject<T> {
 	 */
 	private final float speed;
 
-	public GameObject(float x, float y, float direction, float speed) {
+	/**
+	 * The player that owns the game object.
+	 */
+	private final Player player;
+
+	public GameObject(float x, float y, float direction, float speed, Player player) {
 		this.x = x;
 		this.y = y;
 		this.direction = direction;
 		this.speed = speed;
+		this.player = player;
 	}
 
 	public float getX() {
@@ -45,6 +51,10 @@ public abstract class GameObject<T> {
 
 	public float getSpeed() {
 		return speed;
+	}
+
+	public Player getPlayer() {
+		return player;
 	}
 
 	/**

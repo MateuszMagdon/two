@@ -77,6 +77,10 @@ public class Simulator extends Verticle {
             upadteDelta();
 
             ImmutableList<Plane> planes = updatePlanePositions(game.getPlanes());
+            CollisionDetector collisionDetector = new CollisionDetector();
+            planes = collisionDetector.collidePlanes(planes, planes);
+            planes = collisionDetector.collidePlanes(planes, game.getBullets());
+            
             game = new Game(game.getPlayers(), planes, game.getBullets());
             game = handleBulletBehaviour(game);
 
@@ -120,7 +124,7 @@ public class Simulator extends Verticle {
 
     private void addPlayer(String login, String group) {
         Player player = new Player(login, 0, Team.valueOf(group.toUpperCase()));
-        Plane plane = new Plane(PlaneTypes.STANDARD.getPlaneType(), random.nextInt(map.getWidth()), random.nextInt(map.getHeight()), random.nextInt(360), PlaneTypes.STANDARD.getPlaneType().getSpeed(), player, 100, false, System.currentTimeMillis(), ChangeRequest.Turn.NONE);
+        Plane plane = new Plane(PlaneTypes.STANDARD.getPlaneType(), random.nextInt(map.getWidth()), random.nextInt(map.getHeight()), random.nextInt(360), PlaneTypes.STANDARD.getPlaneType().getSpeed(), player, PlaneTypes.STANDARD.getPlaneType().getHealth(), false, System.currentTimeMillis(), ChangeRequest.Turn.NONE);
 
         game = new Game(addToImmutableList(game.getPlayers(), player), addToImmutableList(game.getPlanes(), plane), game.getBullets());
     }
@@ -129,7 +133,7 @@ public class Simulator extends Verticle {
         return ImmutableList.<E>builder().addAll(list).add(newElement).build();
     }
 
-    private<E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, E elementToRemove) {
+    private <E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, E elementToRemove) {
         return ImmutableList.copyOf(filter(list, Predicates.not(Predicates.equalTo(elementToRemove))));
     }
 
@@ -138,7 +142,7 @@ public class Simulator extends Verticle {
     }
 
     private void upadteDelta() {
-        delta = ((float)(System.currentTimeMillis() - time)) / 1000;
+        delta = ((float)(System.currentTimeMillis() - time)) / 500;
         time = System.currentTimeMillis();
     }
 
@@ -184,7 +188,7 @@ public class Simulator extends Verticle {
         // Check who is shooting
         for(Plane plane: game.getPlanes()) {
             if(plane.getFiringEnabled() && plane.getLastFiredAt() < System.currentTimeMillis()-plane.getPlaneType().getWeapon().getMinTimeBetweenShots()) {
-                bulletsBuilder.add(new Bullet(plane.getX(), plane.getY(), plane.getDirection(), plane.getX(), plane.getY(), plane.getPlaneType().getWeapon()));
+                bulletsBuilder.add(new Bullet(plane.getX(), plane.getY(), plane.getDirection(), plane.getX(), plane.getY(), plane.getPlaneType().getWeapon(), plane.getPlayer()));
                 planesBuilder.add(plane.shotFired(System.currentTimeMillis()));
             } else {
                 planesBuilder.add(plane);
