@@ -11,11 +11,20 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-import pl.agh.edu.model.*;
+import pl.agh.edu.model.Bullet;
+import pl.agh.edu.model.ChangeRequest;
+import pl.agh.edu.model.Game;
+import pl.agh.edu.model.GameObject;
+import pl.agh.edu.model.Map;
+import pl.agh.edu.model.Plane;
+import pl.agh.edu.model.PlaneTypes;
+import pl.agh.edu.model.Player;
+import pl.agh.edu.model.Team;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 
 /**
@@ -34,6 +43,7 @@ public class Simulator extends Verticle {
     private static final Gson GSON = new Gson();
     private final Random random = new Random();
     private final Map map = Map.getMap();
+    CollisionDetector collisionDetector = new CollisionDetector();
 
     public void start() {
         logger = container.logger();
@@ -76,20 +86,80 @@ public class Simulator extends Verticle {
         getVertx().setPeriodic(5, p -> {
             upadteDelta();
 
-            ImmutableList<Plane> planes = updatePlanePositions(game.getPlanes());
-            CollisionDetector collisionDetector = new CollisionDetector();
-            planes = collisionDetector.collidePlanes(planes, planes);
-            planes = collisionDetector.collidePlanes(planes, game.getBullets());
-            
-            game = new Game(game.getPlayers(), planes, game.getBullets());
+            game = updatePlanePositions(game.getPlanes());
+
             game = handleBulletBehaviour(game);
 
             // detect collisions
+            game = handleCollision(game);
+            
             shared.put("game", game);
             eb.publish("game.updated", true);
             // eb.publish("game.over", true);
             // eb.publish("game.information", "{winner: Player, gameTime: 10000, someting else?}");
         });
+    }
+    
+    
+    
+    public Game handleCollision(Game game){
+        
+    	ImmutableList<Bullet> bullets = game.getBullets();
+    	ImmutableList<Plane> currentPlanes = game.getPlanes();
+    	ImmutableList<Plane> deadPlanes = collisionDetector.getDeadPlanes(currentPlanes, bullets);
+    	ImmutableList<Bullet> successBullets = collisionDetector.getSuccessBullets(deadPlanes, bullets);
+    	ImmutableList<Player> players = game.getPlayers();
+    	
+    	if (!deadPlanes.isEmpty()){
+        	ImmutableList.Builder<Player> newPlayers = new ImmutableList.Builder<>();        	
+        	for (Player player : players){
+        		Player currentPlayer = player;
+        		for (Bullet b : successBullets){
+        			if (player == b.getPlayer()){
+        				currentPlayer = player.addPoints(1);                		
+        			}
+        		}
+        		for (Plane plane : deadPlanes){
+        			if (currentPlayer == plane.getPlayer()){
+        				currentPlayer = currentPlayer.addPoints(-1);
+        			}
+        		}
+        		newPlayers.add(currentPlayer);
+        	}
+        	players = newPlayers.build();
+    	
+        	//handle death in client here
+        	
+        	for (Plane pl: deadPlanes){
+        		createRespawnTask(pl);
+            }
+        	
+             currentPlanes = removeFromImmutableList(game.getPlanes(),deadPlanes);
+             bullets = removeFromImmutableList(bullets, successBullets);
+    	}
+
+        return new Game(players, currentPlanes, bullets);
+    }
+   
+    
+    public void createRespawnTask(Plane pl){
+    	getVertx().setTimer(5000, p -> {
+    		Plane oldplane = pl;
+    		Plane plane = new Plane(oldplane.getPlaneType(), 
+    				random.nextInt(map.getWidth()), 
+    				random.nextInt(map.getHeight()), 
+    				random.nextInt(360), 
+    				oldplane.getPlaneType().getSpeed(), 
+    				oldplane.getPlayer(), 
+    				oldplane.getPlaneType().getHealth(), 
+    				false, 
+    				System.currentTimeMillis(), 
+    				ChangeRequest.Turn.NONE);
+
+    		ImmutableList<Plane> planes = addToImmutableList(this.game.getPlanes(),plane);
+    		this.game = new Game(this.game.getPlayers(),planes,this.game.getBullets());
+    		//handle respawn in client here
+    	});
     }
 
     public Game createNewGame() {
@@ -140,13 +210,23 @@ public class Simulator extends Verticle {
     private<E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, Predicate<E> elementToRemove) {
         return ImmutableList.copyOf(filter(list, Predicates.not(elementToRemove)));
     }
-
+    
+    private<E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> originalList, ImmutableList<E> listToRemove) {
+    	ImmutableList.Builder<E> newList = new ImmutableList.Builder<E>();
+    	for(E element : originalList){
+            if(!listToRemove.contains(element)){
+            	newList.add(element);
+            }
+        }
+    	return newList.build();
+    }
+    
     private void upadteDelta() {
         delta = ((float)(System.currentTimeMillis() - time)) / 500;
         time = System.currentTimeMillis();
     }
 
-    public ImmutableList<Plane> updatePlanePositions(ImmutableList<Plane> planes) {
+    public Game updatePlanePositions(ImmutableList<Plane> planes) {
         ImmutableList.Builder<Plane> planeBuilder = new ImmutableList.Builder<>();
         for (Plane plane : planes) {
             Plane element = getNewPosition(plane);
@@ -162,7 +242,7 @@ public class Simulator extends Verticle {
 
             planeBuilder.add(element);
         }
-        return planeBuilder.build();
+        return new Game(game.getPlayers(),planeBuilder.build(),game.getBullets());
     }
 
     public Game handleBulletBehaviour(Game game) {

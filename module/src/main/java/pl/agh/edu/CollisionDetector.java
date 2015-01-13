@@ -1,11 +1,12 @@
 package pl.agh.edu;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import pl.agh.edu.model.Bullet;
 import pl.agh.edu.model.GameObject;
 import pl.agh.edu.model.Plane;
 import pl.agh.edu.model.Team;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Created by lpalonek on 10/12/14.
@@ -39,7 +40,7 @@ public class CollisionDetector {
     public Middle calculateMiddle(float x, float y, float width, float height){
         return new Middle(x + width / 2, y + height / 2);
     }
-
+    
     public <T extends GameObject,E extends GameObject> ImmutableList<T> collidePlanes(ImmutableList<T> planes, ImmutableList<E> secondList){
         ImmutableSet.Builder<T> deadPlanes = new ImmutableSet.Builder<>();
         for(T plane: planes){
@@ -58,6 +59,45 @@ public class CollisionDetector {
         }
         return mergeLists(planes, deadPlanes.build());
     }
+    
+    
+    public ImmutableList<Plane> getDeadPlanes(ImmutableList<Plane> planes, ImmutableList<Bullet> bullets){
+        ImmutableSet.Builder<Plane> deadPlanes = new ImmutableSet.Builder<>();
+        
+        for (Plane plane: planes){
+        	for (Plane opponent : planes){
+        		if (planeCollisionConditions(plane, opponent)) {
+                    deadPlanes.add(opponent);
+                    deadPlanes.add(plane);
+                }
+        	}
+        }
+        
+        for (Plane plane: planes){
+        	for (Bullet b : bullets){
+	        	if(bulletCollisionConditions(plane, b)){
+	                deadPlanes.add(plane);
+	            }
+        	}
+        }
+        ImmutableList.Builder<Plane> planeList = new ImmutableList.Builder<>();
+        planeList.addAll(deadPlanes.build());
+        return planeList.build();
+    }
+    
+    public ImmutableList<Bullet> getSuccessBullets(ImmutableList<Plane> planes, ImmutableList<Bullet> bullets){
+        ImmutableList.Builder<Bullet> newbullets = new ImmutableList.Builder<>();
+        
+        for (Plane plane: planes){
+        	for (Bullet b : bullets){
+	        	if(bulletCollisionConditions(plane, b)){
+	        		newbullets.add(b);
+	            }
+        	}
+        }
+        return newbullets.build();
+    }
+    
 
     public boolean planeCollisionConditions(Plane plane, Plane opponent){
 
