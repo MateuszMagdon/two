@@ -82,6 +82,19 @@ public class CollisionDetector {
         return deadPlanes.build();
     }
     
+    public ImmutableList<Bullet> getSuccesedBullets(ImmutableSet<Plane> planes, ImmutableList<Bullet> bullets){
+        ImmutableList.Builder<Bullet> newbullets = new ImmutableList.Builder<>();
+        
+        for (Plane plane: planes){
+        	for (Bullet b : bullets){
+	        	if(bulletCollisionConditions(plane, b)){
+	        		newbullets.add(b);
+	            }
+        	}
+        }
+        return newbullets.build();
+    }
+    
 
     public boolean planeCollisionConditions(Plane plane, Plane opponent){
 

@@ -35,7 +35,7 @@ public class Simulator extends Verticle {
     private static final Gson GSON = new Gson();
     private final Random random = new Random();
     private final Map map = Map.getMap();
-    CollisionDetector collisionDetector = null;
+    CollisionDetector collisionDetector = new CollisionDetector();
 
     public void start() {
         logger = container.logger();
@@ -78,16 +78,16 @@ public class Simulator extends Verticle {
         getVertx().setPeriodic(5, p -> {
             upadteDelta();
 
-            ImmutableList<Plane> planes = updatePlanePositions(game.getPlanes());
-            collisionDetector = new CollisionDetector();
+            game = updatePlanePositions(game.getPlanes());
+
             //planes = collisionDetector.collidePlanes(planes, planes);
             //planes = collisionDetector.collidePlanes(planes, game.getBullets());
-            
-            ImmutableSet<Plane> deadPlanes = collisionDetector.getDeadPlanes(planes, game.getBullets());
-            game = new Game(game.getPlayers(), planes, game.getBullets());
+
             game = handleBulletBehaviour(game);
 
             // detect collisions
+            game = handleCollision(game);
+            
             shared.put("game", game);
             eb.publish("game.updated", true);
             // eb.publish("game.over", true);
@@ -96,15 +96,66 @@ public class Simulator extends Verticle {
     }
     
     
-    public <T> ImmutableList<T> mergeLists(ImmutableList<T> all, ImmutableSet<T> dead){
-        ImmutableList.Builder<T> planeList = new ImmutableList.Builder<>();
-        for(T t : all){
-            if( !dead.contains(t)){
-                planeList.add(t);
-            }
+    public Game handleCollision(Game game){
+        
+    	ImmutableList<Bullet> bullets = game.getBullets();
+    	ImmutableSet<Plane> deadPlanes = collisionDetector.getDeadPlanes(game.getPlanes(), bullets);
+    	ImmutableList<Bullet> successedBullets = collisionDetector.getSuccesedBullets(deadPlanes, bullets);
+    	ImmutableList<Player> players = game.getPlayers();
+    	
+    	ImmutableList.Builder<Player> newPlayers = new ImmutableList.Builder<>();
+    	
+    	for (Player player : players){	
+    		for (Bullet b : successedBullets){
+    			if (player.equals(b.getPlayer())){
+    				player.addPoints(1);
+    			}
+    		}
+    		for (Plane plane : deadPlanes){
+    			if (player.equals(plane.getPlayer())){
+    				player.addPoints(-1);
+    			}
+    		}
+    		newPlayers.add(player);
+    	}
+
+    	
+    	
+    	
+    	//handle death in client	
+    	
+    	for (Plane pl: deadPlanes){
+        	getVertx().setTimer(5000, p -> {
+        		Plane oldplane = pl;
+        		Plane plane = new Plane(oldplane.getPlaneType(), 
+        				random.nextInt(map.getWidth()), 
+        				random.nextInt(map.getHeight()), 
+        				random.nextInt(360), 
+        				oldplane.getPlaneType().getSpeed(), 
+        				oldplane.getPlayer(), 
+        				oldplane.getPlaneType().getHealth(), 
+        				false, 
+        				System.currentTimeMillis(), 
+        				ChangeRequest.Turn.NONE);
+ 
+        		ImmutableList<Plane> planes = addToImmutableList(this.game.getPlanes(),plane);
+        		this.game = new Game(this.game.getPlayers(),planes,this.game.getBullets());
+        		//handle respawn in client
+        	});
         }
-        return planeList.build();
+    	
+    	
+    	ImmutableList.Builder<Plane> planeList = new ImmutableList.Builder<>();
+         for(Plane plane : game.getPlanes()){
+             if(!deadPlanes.contains(plane)){
+                 planeList.add(plane);
+             }
+         }    	
+    	
+        return new Game(newPlayers.build(), planeList.build(), bullets);
     }
+    
+    
 
     public Game createNewGame() {
         return new Game(ImmutableList.<Player>of(), ImmutableList.<Plane>of(), ImmutableList.<Bullet>of());
@@ -160,7 +211,7 @@ public class Simulator extends Verticle {
         time = System.currentTimeMillis();
     }
 
-    public ImmutableList<Plane> updatePlanePositions(ImmutableList<Plane> planes) {
+    public Game updatePlanePositions(ImmutableList<Plane> planes) {
         ImmutableList.Builder<Plane> planeBuilder = new ImmutableList.Builder<>();
         for (Plane plane : planes) {
             Plane element = getNewPosition(plane);
@@ -176,7 +227,7 @@ public class Simulator extends Verticle {
 
             planeBuilder.add(element);
         }
-        return planeBuilder.build();
+        return new Game(game.getPlayers(),planeBuilder.build(),game.getBullets());
     }
 
     public Game handleBulletBehaviour(Game game) {
