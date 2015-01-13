@@ -266,14 +266,52 @@ public class Simulator extends Verticle {
         int correction = -90;
         float newX = (float) (element.getX() + (element.getSpeed() * Math.cos(Math.toRadians(element.getDirection()+correction))) * delta);
         float newY = (float) (element.getY() + (element.getSpeed() * Math.sin(Math.toRadians(element.getDirection()+correction))) * delta);
+        if(Plane.class.isAssignableFrom(element.getClass())) {
+            Plane plane = Plane.class.cast(element);
 
-        if(newX > map.getWidth()) newX = 0;
-        if(newX < 0) newX = map.getWidth();
+            if(newX > map.getWidth()) {
+                newX = map.getWidth();
+                plane = plane.changeDirection(-2 * plane.getDirection());
+            }
 
-        if(newY > map.getHeight()) newY = 0;
-        if(newY < 0) newY = map.getHeight();
+            if(newX < 0) {
+                newX = 0;
+                plane = plane.changeDirection(2 * (180 - plane.getDirection()));
+            }
 
-        logger.trace("Moving bullet from " + element.getX() + "," + element.getY() + " to " + newX + ", " + newY);
-        return element.moveTo(newX, newY);
+            if(newY > map.getHeight()) {
+                newY = map.getHeight();
+                plane = plane.changeDirection(180 - 2 * plane.getDirection());
+
+            }
+
+            if(newY < 0) {
+                newY = 0;
+                plane = plane.changeDirection(180 - 2 * plane.getDirection());
+            }
+            
+            return (T) GameObject.class.cast(plane.moveTo(newX, newY));
+        } else {
+
+            if(newX > map.getWidth()) {
+                newX = 0;
+            }
+
+            if(newX < 0) {
+                newX = map.getWidth();
+            }
+
+            if(newY > map.getHeight()) {
+                newY = 0;
+            }
+
+            if(newY < 0) {
+                newY = map.getHeight();
+            }
+
+            logger.trace("Moving bullet from " + element.getX() + "," + element.getY() + " to " + newX + ", " + newY);
+            return element.moveTo(newX, newY);
+        }
+
     }
 }
