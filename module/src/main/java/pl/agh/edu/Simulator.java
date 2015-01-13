@@ -11,7 +11,15 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-import pl.agh.edu.model.*;
+import pl.agh.edu.model.Bullet;
+import pl.agh.edu.model.ChangeRequest;
+import pl.agh.edu.model.Game;
+import pl.agh.edu.model.GameObject;
+import pl.agh.edu.model.Map;
+import pl.agh.edu.model.Plane;
+import pl.agh.edu.model.PlaneTypes;
+import pl.agh.edu.model.Player;
+import pl.agh.edu.model.Team;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -80,9 +88,6 @@ public class Simulator extends Verticle {
 
             game = updatePlanePositions(game.getPlanes());
 
-            //planes = collisionDetector.collidePlanes(planes, planes);
-            //planes = collisionDetector.collidePlanes(planes, game.getBullets());
-
             game = handleBulletBehaviour(game);
 
             // detect collisions
@@ -96,66 +101,66 @@ public class Simulator extends Verticle {
     }
     
     
+    
     public Game handleCollision(Game game){
         
     	ImmutableList<Bullet> bullets = game.getBullets();
-    	ImmutableSet<Plane> deadPlanes = collisionDetector.getDeadPlanes(game.getPlanes(), bullets);
-    	ImmutableList<Bullet> successedBullets = collisionDetector.getSuccesedBullets(deadPlanes, bullets);
+    	ImmutableList<Plane> currentPlanes = game.getPlanes();
+    	ImmutableList<Plane> deadPlanes = collisionDetector.getDeadPlanes(currentPlanes, bullets);
+    	ImmutableList<Bullet> successBullets = collisionDetector.getSuccessBullets(deadPlanes, bullets);
     	ImmutableList<Player> players = game.getPlayers();
     	
-    	ImmutableList.Builder<Player> newPlayers = new ImmutableList.Builder<>();
+    	if (!deadPlanes.isEmpty()){
+        	ImmutableList.Builder<Player> newPlayers = new ImmutableList.Builder<>();        	
+        	for (Player player : players){
+        		Player currentPlayer = player;
+        		for (Bullet b : successBullets){
+        			if (player == b.getPlayer()){
+        				currentPlayer = player.addPoints(1);                		
+        			}
+        		}
+        		for (Plane plane : deadPlanes){
+        			if (currentPlayer == plane.getPlayer()){
+        				currentPlayer = currentPlayer.addPoints(-1);
+        			}
+        		}
+        		newPlayers.add(currentPlayer);
+        	}
+        	players = newPlayers.build();
     	
-    	for (Player player : players){	
-    		for (Bullet b : successedBullets){
-    			if (player.equals(b.getPlayer())){
-    				player.addPoints(1);
-    			}
-    		}
-    		for (Plane plane : deadPlanes){
-    			if (player.equals(plane.getPlayer())){
-    				player.addPoints(-1);
-    			}
-    		}
-    		newPlayers.add(player);
+        	//handle death in client here
+        	
+        	for (Plane pl: deadPlanes){
+        		createRespawnTask(pl);
+            }
+        	
+             currentPlanes = removeFromImmutableList(game.getPlanes(),deadPlanes);
+             bullets = removeFromImmutableList(bullets, successBullets);
     	}
 
-    	
-    	
-    	
-    	//handle death in client	
-    	
-    	for (Plane pl: deadPlanes){
-        	getVertx().setTimer(5000, p -> {
-        		Plane oldplane = pl;
-        		Plane plane = new Plane(oldplane.getPlaneType(), 
-        				random.nextInt(map.getWidth()), 
-        				random.nextInt(map.getHeight()), 
-        				random.nextInt(360), 
-        				oldplane.getPlaneType().getSpeed(), 
-        				oldplane.getPlayer(), 
-        				oldplane.getPlaneType().getHealth(), 
-        				false, 
-        				System.currentTimeMillis(), 
-        				ChangeRequest.Turn.NONE);
- 
-        		ImmutableList<Plane> planes = addToImmutableList(this.game.getPlanes(),plane);
-        		this.game = new Game(this.game.getPlayers(),planes,this.game.getBullets());
-        		//handle respawn in client
-        	});
-        }
-    	
-    	
-    	ImmutableList.Builder<Plane> planeList = new ImmutableList.Builder<>();
-         for(Plane plane : game.getPlanes()){
-             if(!deadPlanes.contains(plane)){
-                 planeList.add(plane);
-             }
-         }    	
-    	
-        return new Game(newPlayers.build(), planeList.build(), bullets);
+        return new Game(players, currentPlanes, bullets);
     }
+   
     
-    
+    public void createRespawnTask(Plane pl){
+    	getVertx().setTimer(5000, p -> {
+    		Plane oldplane = pl;
+    		Plane plane = new Plane(oldplane.getPlaneType(), 
+    				random.nextInt(map.getWidth()), 
+    				random.nextInt(map.getHeight()), 
+    				random.nextInt(360), 
+    				oldplane.getPlaneType().getSpeed(), 
+    				oldplane.getPlayer(), 
+    				oldplane.getPlaneType().getHealth(), 
+    				false, 
+    				System.currentTimeMillis(), 
+    				ChangeRequest.Turn.NONE);
+
+    		ImmutableList<Plane> planes = addToImmutableList(this.game.getPlanes(),plane);
+    		this.game = new Game(this.game.getPlayers(),planes,this.game.getBullets());
+    		//handle respawn in client here
+    	});
+    }
 
     public Game createNewGame() {
         return new Game(ImmutableList.<Player>of(), ImmutableList.<Plane>of(), ImmutableList.<Bullet>of());
@@ -205,7 +210,17 @@ public class Simulator extends Verticle {
     private<E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, Predicate<E> elementToRemove) {
         return ImmutableList.copyOf(filter(list, Predicates.not(elementToRemove)));
     }
-
+    
+    private<E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> originalList, ImmutableList<E> listToRemove) {
+    	ImmutableList.Builder<E> newList = new ImmutableList.Builder<E>();
+    	for(E element : originalList){
+            if(!listToRemove.contains(element)){
+            	newList.add(element);
+            }
+        }
+    	return newList.build();
+    }
+    
     private void upadteDelta() {
         delta = ((float)(System.currentTimeMillis() - time)) / 500;
         time = System.currentTimeMillis();
