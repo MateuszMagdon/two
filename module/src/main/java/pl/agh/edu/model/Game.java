@@ -15,8 +15,8 @@ import com.google.gson.Gson;
 public final class Game implements Shareable {
 	private static final Gson GSON = new Gson();
 
-	public static Long GAME_TIME = 6*1000L;
-	public static Long BREAK_TIME = 6*1000L;
+	public static Long GAME_TIME = 60*1000L;
+	public static Long BREAK_TIME = 5*1000L;
 
 	/**
 	 * The list of all players.

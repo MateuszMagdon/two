@@ -77,6 +77,38 @@
     <img src="resources/static/img/missile.png" id="missile" class="boardImage" />
 </div>
 
+<div id="overlay" data-ng-controller="boardController as bc">
+    <div id="lower"></div>
+    <div id="higher">
+        <div id="teamRead">
+            <h2>Red</h2>
+            <table>
+                <tr>
+                    <th>Player</th>
+                    <th>Points</th>
+                </tr>
+                <tr data-ng-repeat="player in game.game.players|filter:filterRed">
+                    <td>{{ player.nickName }}</td>
+                    <td>{{ player.points }}</td>
+                </tr>
+            </table>
+        </div>
+        <div id="teamBlue">
+            <h2>Blue</h2>
+            <table>
+                <tr>
+                    <th>Player</th>
+                    <th>Points</th>
+                </tr>
+                <tr data-ng-repeat="player in game.game.players|filter:filterBlue">
+                    <td>{{ player.nickName }}</td>
+                    <td>{{ player.points }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div id="loginContainer" data-ng-controller="loginController as cnt" class="container">
     <form name="loginForm" id="loginForm" data-ng-hide="cnt.logged" role="form" class="form-horizontal" novalidate>
         <div class="col-sm-6 col-sm-offset-3">

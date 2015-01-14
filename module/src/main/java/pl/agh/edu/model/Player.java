@@ -35,4 +35,8 @@ public final class Player {
 	public Team getTeam() {
 		return team;
 	}
+
+	public Player resetPoints() {
+		return new Player(nickName, 0, team);
+	}
 }

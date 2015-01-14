@@ -1,40 +1,40 @@
 package pl.agh.edu;
 
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.find;
-
-import java.util.Random;
-import java.util.concurrent.ConcurrentMap;
-
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
-
 import pl.agh.edu.model.*;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
+import java.util.Random;
+import java.util.concurrent.ConcurrentMap;
+
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.find;
+import static pl.agh.edu.ImmutableHelper.addToImmutableList;
+import static pl.agh.edu.ImmutableHelper.removeFromImmutableList;
 
 /**
  * Created by Michal
  * 2014-12-05.
  */
 public class Simulator extends Verticle {
+    private static final Gson GSON = new Gson();
+    private final Random random = new Random();
+    private final Map map = Map.getMap();
+
     Logger logger;
 
     ConcurrentMap<String, Game> shared;
     private Game game;
     private EventBus eb;
-    private Boolean continueGame = true;
     long time = System.currentTimeMillis();
     float delta = 0;
-    private static final Gson GSON = new Gson();
-    private final Random random = new Random();
-    private final Map map = Map.getMap();
+    private Long simulationTimer;
 
     public void start() {
         logger = container.logger();
@@ -46,13 +46,12 @@ public class Simulator extends Verticle {
         eb = getVertx().eventBus();
         logger.info("Starting simulator");
         eb.publish("game.start", true);
-        createSimulationTimer();
+        restartGame();
         createLoginLogoutHandlers();
 
         //handler to receive updates from clients
         eb.registerHandler("two.server", (Message<JsonObject> message) -> {
             ChangeRequest change = GSON.fromJson(message.body().toString(), ChangeRequest.class);
-            //logger.debug("Received update from player: " + change.getPlayer());
             game = new Game(game.getPlayers(), applyChangeOnPlane(change, game.getPlanes()), game.getBullets(), game.getGameState());
         });
 
@@ -74,8 +73,55 @@ public class Simulator extends Verticle {
         eb.registerHandler("client.disconnected", (Message<JsonObject> message) -> removePlayer(message.body().getString("login")));
     }
 
-    private void createSimulationTimer() {
-        Long simulationTimer = getVertx().setPeriodic(5, p -> {
+    private void restartGame() {
+        simulationTimer = createSimulationPeriodic();
+
+        logger.info("Setting game over timer");
+        getVertx().setTimer(Game.GAME_TIME, o -> {
+            getVertx().cancelTimer(simulationTimer);
+            eb.publish("game.over", true);
+            logger.info("Game Over");
+
+            game = new Game(game.getPlayers(), game.getPlanes(), game.getBullets(), GameState.END_GAME);
+
+            logger.info("Setting restart timer");
+            getVertx().setTimer(Game.BREAK_TIME, input -> {
+                ImmutableList.Builder<Plane> planes = new ImmutableList.Builder<>();
+                ImmutableList.Builder<Player> players = new ImmutableList.Builder<>();
+
+                game.getPlayers().stream().forEach(player -> {
+                    Plane oldPlane = getPlaneForPlayer(player.getNickName());
+
+                    planes.add(new Plane(oldPlane.getPlaneType(),
+                            random.nextInt(map.getWidth()),
+                            random.nextInt(map.getHeight()),
+                            random.nextInt(360),
+                            PlaneTypes.STANDARD.getPlaneType().getSpeed(),
+                            player,
+                            PlaneTypes.STANDARD.getPlaneType().getHealth(),
+                            false,
+                            System.currentTimeMillis(),
+                            ChangeRequest.Turn.NONE));
+
+                    players.add(player.resetPoints());
+
+                });
+
+                game = new Game(players.build(),
+                        planes.build(),
+                        new ImmutableList.Builder<Bullet>().build(),
+                        GameState.RUNNING);
+
+                eb.publish("game.start", true);
+                restartGame();
+
+                logger.info("Restarting game");
+            });
+        });
+    }
+
+    private long createSimulationPeriodic() {
+        return getVertx().setPeriodic(5, p -> {
             upadteDelta();
 
             ImmutableList<Plane> planes = updatePlanePositions(game.getPlanes());
@@ -86,27 +132,8 @@ public class Simulator extends Verticle {
             game = new Game(game.getPlayers(), planes, game.getBullets(), game.getGameState());
             game = handleBulletBehaviour(game);
 
-            // detect collisions
             shared.put("game", game);
             eb.publish("game.updated", true);
-            // eb.publish("game.over", true);
-            // eb.publish("game.information", "{winner: Player, gameTime: 10000, someting else?}");
-        });
-
-        getVertx().setTimer(Game.GAME_TIME, o -> {
-            getVertx().cancelTimer(simulationTimer);
-            eb.publish("game.over", true);
-            game = new Game(game.getPlayers(), game.getPlanes(), game.getBullets(), GameState.END_GAME);
-
-            getVertx().setTimer(Game.BREAK_TIME, input -> {
-                ImmutableList.Builder<Plane> planes = new ImmutableList.Builder<>();
-                game.getPlayers().stream().forEach(player -> {
-                    Plane oldPlane = getPlaneForPlayer(player.getNickName());
-                    planes.add(new Plane(oldPlane.getPlaneType(), random.nextInt(map.getWidth()), random.nextInt(map.getHeight()), random.nextInt(360), PlaneTypes.STANDARD.getPlaneType().getSpeed(), player, PlaneTypes.STANDARD.getPlaneType().getHealth(), false, System.currentTimeMillis(), ChangeRequest.Turn.NONE));
-                    game = new Game(game.getPlayers(), game.getPlanes(), game.getBullets(), GameState.RUNNING);
-                    eb.publish("game.start", true);
-                });
-            });
         });
     }
 
@@ -136,7 +163,7 @@ public class Simulator extends Verticle {
     }
 
     private Plane getPlaneForPlayer(String login) {
-        return find(game.getPlanes(), (Predicate<Plane>) plane -> plane.getPlayer().getNickName().equals(login));
+        return find(game.getPlanes(), plane -> plane.getPlayer().getNickName().equals(login));
     }
 
     private ImmutableList<Player> removePlayerFromListByLogin(String login) {
@@ -148,18 +175,6 @@ public class Simulator extends Verticle {
         Plane plane = new Plane(PlaneTypes.STANDARD.getPlaneType(), random.nextInt(map.getWidth()), random.nextInt(map.getHeight()), random.nextInt(360), PlaneTypes.STANDARD.getPlaneType().getSpeed(), player, PlaneTypes.STANDARD.getPlaneType().getHealth(), false, System.currentTimeMillis(), ChangeRequest.Turn.NONE);
 
         game = new Game(addToImmutableList(game.getPlayers(), player), addToImmutableList(game.getPlanes(), plane), game.getBullets(), game.getGameState());
-    }
-
-    private <E> ImmutableList<E> addToImmutableList(ImmutableList<E> list, E newElement) {
-        return ImmutableList.<E>builder().addAll(list).add(newElement).build();
-    }
-
-    private <E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, E elementToRemove) {
-        return ImmutableList.copyOf(filter(list, Predicates.not(Predicates.equalTo(elementToRemove))));
-    }
-
-    private <E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, Predicate<E> elementToRemove) {
-        return ImmutableList.copyOf(filter(list, Predicates.not(elementToRemove)));
     }
 
     private void upadteDelta() {
