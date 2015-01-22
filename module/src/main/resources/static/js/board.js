@@ -187,11 +187,35 @@ function setUpBoard(height, width, changeRequestService) {
         }
     });
 
+    window.requestAnimationFrame(function() {
+    	animFrame(canvas);
+    });
     return canvas
 }
 
-function updateCanvas(canvas, scaleData, login, gameObject) {
+var allObjects = [];
+var lastUpdate = null;
 
+function animFrame(canvas) {
+	var delta = (new Date()).getTime() - lastUpdate;
+	lastUpdate = (new Date()).getTime();
+	var slice = 500;
+	var chunk = delta / slice;
+	allObjects.forEach(function(o) {
+		var numPixels = o.speed * chunk;
+		var angle = (o.angle) * (Math.PI/180)
+		var addX = Math.sin(angle) * numPixels;
+		var addY = Math.cos(angle) * numPixels;
+		o.set({ left: o.left + addX, top: o.top - addY})
+	});
+	canvas.renderAll();
+    window.requestAnimationFrame(function() {
+    	animFrame(canvas);
+    });
+};
+
+function updateCanvas(canvas, scaleData, login, gameObject) {
+	lastUpdate = (new Date()).getTime();
     function addCanvasObjects(units, canvasObjects, images, scale, isPlanes) {
         var scaleX = getScale(units.horizontal, scale.widthInUnits, scale.width);
         var scaleY = getScale(units.vertical, scale.heightInUnits, scale.height);
@@ -208,8 +232,10 @@ function updateCanvas(canvas, scaleData, login, gameObject) {
                 angle: ufo.direction,
                 centeredRotation: true
             }));
+            canvasImage.speed = ufo.speed;
 
             canvas.add(canvasImage);
+            allObjects.push(canvasImage);
         }
     }
 
@@ -242,6 +268,7 @@ function updateCanvas(canvas, scaleData, login, gameObject) {
         vertical: canvas.getHeight() / scaleData.verticalUnits
     };
 
+    allObjects = [];
     addCanvasObjects(units, gameObject.planes, images, scaleData.plane, true);
     addCanvasObjects(units, gameObject.bullets, images, scaleData.missile, false);
 }
