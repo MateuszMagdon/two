@@ -17,7 +17,7 @@ public class CollisionDetector {
     private static final float PLANE_HEIGHT = 74f;
 
     private static final float BULLET_WIDTH = 30f;
-    private static final float BULLET_HEIGHT = 1f;
+    private static final float BULLET_HEIGHT = 5f;
 
     public <T extends GameObject,E extends GameObject> boolean collision(T first, E second, boolean same){
         float firstX = first.getX();
