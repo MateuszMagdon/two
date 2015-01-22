@@ -67,20 +67,24 @@ public class CollisionDetector {
         for (Plane plane: planes){
         	for (Plane opponent : planes){
         		if (planeCollisionConditions(plane, opponent)) {
-                    deadPlanes.add(opponent);
-                    deadPlanes.add(plane);
+                    plane = plane.subtractHealth(plane.getHealth());
                 }
         	}
+                    deadPlanes.add(plane);
         }
-        
-        for (Plane plane: planes){
+
+        ImmutableList.Builder<Plane> planeList = new ImmutableList.Builder<>();
+        planeList.addAll(deadPlanes.build());
+        deadPlanes = new ImmutableSet.Builder<>();
+        for (Plane plane: planeList.build()){
         	for (Bullet b : bullets){
 	        	if(bulletCollisionConditions(plane, b)){
-	                deadPlanes.add(plane);
-	            }
+                    plane = plane.subtractHealth(b.getWeapon().getDamage());
+                }
         	}
+            deadPlanes.add(plane);
         }
-        ImmutableList.Builder<Plane> planeList = new ImmutableList.Builder<>();
+        planeList = new ImmutableList.Builder<>();
         planeList.addAll(deadPlanes.build());
         return planeList.build();
     }
@@ -123,6 +127,26 @@ public class CollisionDetector {
             return true;
         }
         return false;
+    }
+
+    public ImmutableList<Plane> getDeadPlanesList(ImmutableList<Plane> planes, ImmutableList<Bullet> bullets){
+        ImmutableList.Builder<Plane> resultList = new ImmutableList.Builder<>();
+        for(Plane plane: getDeadPlanes(planes, bullets)){
+            if(plane.getHealth() <= 0){
+                resultList.add(plane);
+            }
+        }
+        return resultList.build();
+    }
+
+    public ImmutableList<Plane> getAlivePlanesList(ImmutableList<Plane> planes, ImmutableList<Bullet> bullets){
+        ImmutableList.Builder<Plane> resultList = new ImmutableList.Builder<>();
+        for(Plane plane: getDeadPlanes(planes, bullets)){
+            if(plane.getHealth() > 0){
+                resultList.add(plane);
+            }
+        }
+        return resultList.build();
     }
 
     public <T> ImmutableList<T> mergeLists(ImmutableList<T> all, ImmutableSet<T> dead){

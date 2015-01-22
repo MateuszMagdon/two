@@ -106,8 +106,9 @@ public class Simulator extends Verticle {
         
     	ImmutableList<Bullet> bullets = game.getBullets();
     	ImmutableList<Plane> currentPlanes = game.getPlanes();
-    	ImmutableList<Plane> deadPlanes = collisionDetector.getDeadPlanes(currentPlanes, bullets);
-    	ImmutableList<Bullet> successBullets = collisionDetector.getSuccessBullets(deadPlanes, bullets);
+    	ImmutableList<Plane> deadPlanes = collisionDetector.getDeadPlanesList(currentPlanes, bullets);
+    	currentPlanes = collisionDetector.getAlivePlanesList(currentPlanes, bullets);
+        ImmutableList<Bullet> successBullets = collisionDetector.getSuccessBullets(deadPlanes, bullets);
     	ImmutableList<Player> players = game.getPlayers();
     	
     	if (!deadPlanes.isEmpty()){
@@ -134,9 +135,10 @@ public class Simulator extends Verticle {
         		createRespawnTask(pl);
             }
         	
-             currentPlanes = removeFromImmutableList(game.getPlanes(),deadPlanes);
+             currentPlanes = removeFromImmutableList(currentPlanes,deadPlanes);
              bullets = removeFromImmutableList(bullets, successBullets);
     	}
+             bullets = removeFromImmutableList(bullets, collisionDetector.getSuccessBullets(currentPlanes, bullets));
 
         return new Game(players, currentPlanes, bullets);
     }
