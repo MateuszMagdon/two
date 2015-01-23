@@ -1,48 +1,41 @@
 package pl.agh.edu;
 
-import static com.google.common.collect.Iterables.filter;
-
-import java.util.Random;
-import java.util.concurrent.ConcurrentMap;
-
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-import pl.agh.edu.model.Bullet;
-import pl.agh.edu.model.ChangeRequest;
-import pl.agh.edu.model.Game;
-import pl.agh.edu.model.GameObject;
-import pl.agh.edu.model.Map;
-import pl.agh.edu.model.Plane;
-import pl.agh.edu.model.PlaneTypes;
-import pl.agh.edu.model.Player;
-import pl.agh.edu.model.Team;
+import pl.agh.edu.model.*;
 
-import com.google.common.base.Predicate;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.find;
+
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
+
+import java.util.Random;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by Michal
  * 2014-12-05.
  */
 public class Simulator extends Verticle {
+    private static final Gson GSON = new Gson();
+    private final Random random = new Random();
+    private final Map map = Map.getMap();
+
     Logger logger;
 
     ConcurrentMap<String, Game> shared;
     private Game game;
     private EventBus eb;
-    private Boolean continueGame = true;
     long time = System.currentTimeMillis();
     float delta = 0;
-    private static final Gson GSON = new Gson();
-    private final Random random = new Random();
-    private final Map map = Map.getMap();
+    private Long simulationTimer;
     CollisionDetector collisionDetector = new CollisionDetector();
 
     public void start() {
@@ -55,20 +48,20 @@ public class Simulator extends Verticle {
         eb = getVertx().eventBus();
         logger.info("Starting simulator");
         eb.publish("game.start", true);
-        createSimulationTimer();
+        restartGame();
         createLoginLogoutHandlers();
 
         //handler to receive updates from clients
         eb.registerHandler("two.server", (Message<JsonObject> message) -> {
-        		ChangeRequest change = GSON.fromJson(message.body().toString(), ChangeRequest.class);
-        		//logger.debug("Received update from player: " + change.getPlayer());   		
-        		game = new Game(game.getPlayers(), applyChangeOnPlane(change,game.getPlanes()), game.getBullets());
+            ChangeRequest change = GSON.fromJson(message.body().toString(), ChangeRequest.class);
+            game = new Game(game.getPlayers(), applyChangeOnPlane(change, game.getPlanes()), game.getBullets(), game.getGameState());
         });
 
         //periodic task to broadcast game state every interval
         vertx.setPeriodic(50, timerID -> eb.publish("two.clients", game.toJson()));
 
         eb.registerHandler("game.players", (Message<String> message) -> message.reply(GSON.toJson(game.getPlayers())));
+
     }
 
     private void createLoginLogoutHandlers() {
@@ -82,8 +75,55 @@ public class Simulator extends Verticle {
         eb.registerHandler("client.disconnected", (Message<JsonObject> message) -> removePlayer(message.body().getString("login")));
     }
 
-    private void createSimulationTimer() {
-        getVertx().setPeriodic(5, p -> {
+    private void restartGame() {
+        simulationTimer = createSimulationPeriodic();
+
+        logger.info("Setting game over timer");
+        getVertx().setTimer(Game.GAME_TIME, o -> {
+            getVertx().cancelTimer(simulationTimer);
+            eb.publish("game.over", true);
+            logger.info("Game Over");
+
+            game = new Game(game.getPlayers(), game.getPlanes(), game.getBullets(), GameState.END_GAME);
+
+            logger.info("Setting restart timer");
+            getVertx().setTimer(Game.BREAK_TIME, input -> {
+                ImmutableList.Builder<Plane> planes = new ImmutableList.Builder<>();
+                ImmutableList.Builder<Player> players = new ImmutableList.Builder<>();
+
+                game.getPlayers().stream().forEach(player -> {
+                    Plane oldPlane = getPlaneForPlayer(player.getNickName());
+
+                    planes.add(new Plane(oldPlane.getPlaneType(),
+                            random.nextInt(map.getWidth()),
+                            random.nextInt(map.getHeight()),
+                            random.nextInt(360),
+                            PlaneTypes.STANDARD.getPlaneType().getSpeed(),
+                            player,
+                            PlaneTypes.STANDARD.getPlaneType().getHealth(),
+                            false,
+                            System.currentTimeMillis(),
+                            ChangeRequest.Turn.NONE));
+
+                    players.add(player.resetPoints());
+
+                });
+
+                game = new Game(players.build(),
+                        planes.build(),
+                        new ImmutableList.Builder<Bullet>().build(),
+                        GameState.RUNNING);
+
+                eb.publish("game.start", true);
+                restartGame();
+
+                logger.info("Restarting game");
+            });
+        });
+    }
+
+    private long createSimulationPeriodic() {
+        return getVertx().setPeriodic(5, p -> {
             upadteDelta();
 
             game = updatePlanePositions(game.getPlanes());
@@ -95,8 +135,6 @@ public class Simulator extends Verticle {
             
             shared.put("game", game);
             eb.publish("game.updated", true);
-            // eb.publish("game.over", true);
-            // eb.publish("game.information", "{winner: Player, gameTime: 10000, someting else?}");
         });
     }
     
@@ -140,7 +178,7 @@ public class Simulator extends Verticle {
     	}
              bullets = removeFromImmutableList(bullets, collisionDetector.getSuccessBullets(currentPlanes, bullets));
 
-        return new Game(players, currentPlanes, bullets);
+        return new Game(players, currentPlanes, bullets, game.getGameState());
     }
    
     
@@ -159,35 +197,38 @@ public class Simulator extends Verticle {
     				ChangeRequest.Turn.NONE);
 
     		ImmutableList<Plane> planes = addToImmutableList(this.game.getPlanes(),plane);
-    		this.game = new Game(this.game.getPlayers(),planes,this.game.getBullets());
+    		this.game = new Game(this.game.getPlayers(),planes,this.game.getBullets(),game.getGameState());
     		//handle respawn in client here
     	});
     }
 
     public Game createNewGame() {
-        return new Game(ImmutableList.<Player>of(), ImmutableList.<Plane>of(), ImmutableList.<Bullet>of());
+        return new Game(ImmutableList.<Player>of(), ImmutableList.<Plane>of(), ImmutableList.<Bullet>of(), GameState.RUNNING);
     }
-    
-    private ImmutableList<Plane> applyChangeOnPlane(ChangeRequest change,ImmutableList<Plane> planes){
-    	ImmutableList.Builder<Plane> planeBuilder = new ImmutableList.Builder<>();
-    	for (Plane p : planes){
-    		if (p.getPlayer().getNickName().equals(change.getPlayer())){
-    			Plane plane = p.handleChangeRequest(change);
-    			planeBuilder.add(plane);
-    		}
-    		else{
-    			planeBuilder.add(p);
-    		}
-    	}
-    	return planeBuilder.build();
+
+    private ImmutableList<Plane> applyChangeOnPlane(ChangeRequest change, ImmutableList<Plane> planes) {
+        ImmutableList.Builder<Plane> planeBuilder = new ImmutableList.Builder<>();
+        for (Plane p : planes) {
+            if (p.getPlayer().getNickName().equals(change.getPlayer())) {
+                Plane plane = p.handleChangeRequest(change);
+                planeBuilder.add(plane);
+            } else {
+                planeBuilder.add(p);
+            }
+        }
+        return planeBuilder.build();
     }
-    
+
     private void removePlayer(String login) {
-        game = new Game(removePlayerFromListByLogin(login), removePlaneFromListByPlayerLogin(login), game.getBullets());
+        game = new Game(removePlayerFromListByLogin(login), removePlaneFromListByPlayerLogin(login), game.getBullets(), game.getGameState());
     }
 
     private ImmutableList<Plane> removePlaneFromListByPlayerLogin(String login) {
         return removeFromImmutableList(game.getPlanes(), (Predicate<Plane>) plane -> plane.getPlayer().getNickName().equals(login));
+    }
+
+    private Plane getPlaneForPlayer(String login) {
+        return find(game.getPlanes(), plane -> plane.getPlayer().getNickName().equals(login));
     }
 
     private ImmutableList<Player> removePlayerFromListByLogin(String login) {
@@ -198,7 +239,7 @@ public class Simulator extends Verticle {
         Player player = new Player(login, 0, Team.valueOf(group.toUpperCase()));
         Plane plane = new Plane(PlaneTypes.STANDARD.getPlaneType(), random.nextInt(map.getWidth()), random.nextInt(map.getHeight()), random.nextInt(360), PlaneTypes.STANDARD.getPlaneType().getSpeed(), player, PlaneTypes.STANDARD.getPlaneType().getHealth(), false, System.currentTimeMillis(), ChangeRequest.Turn.NONE);
 
-        game = new Game(addToImmutableList(game.getPlayers(), player), addToImmutableList(game.getPlanes(), plane), game.getBullets());
+        game = new Game(addToImmutableList(game.getPlayers(), player), addToImmutableList(game.getPlanes(), plane), game.getBullets(), game.getGameState());
     }
 
     private<E> ImmutableList<E> addToImmutableList(ImmutableList<E> list, E newElement) {
@@ -222,9 +263,9 @@ public class Simulator extends Verticle {
         }
     	return newList.build();
     }
-    
+
     private void upadteDelta() {
-        delta = ((float)(System.currentTimeMillis() - time)) / 500;
+        delta = ((float) (System.currentTimeMillis() - time)) / 500;
         time = System.currentTimeMillis();
     }
 
@@ -233,9 +274,9 @@ public class Simulator extends Verticle {
         for (Plane plane : planes) {
             Plane element = getNewPosition(plane);
 
-            if(element.getTurn() != ChangeRequest.Turn.NONE) {
-                float howMuch = element.getPlaneType().getTurnDigreesPerInterval()*delta;
-                if(element.getTurn() == ChangeRequest.Turn.LEFT) {
+            if (element.getTurn() != ChangeRequest.Turn.NONE) {
+                float howMuch = element.getPlaneType().getTurnDigreesPerInterval() * delta;
+                if (element.getTurn() == ChangeRequest.Turn.LEFT) {
                     element = element.changeDirection(-howMuch);
                 } else {
                     element = element.changeDirection(howMuch);
@@ -244,7 +285,7 @@ public class Simulator extends Verticle {
 
             planeBuilder.add(element);
         }
-        return new Game(game.getPlayers(),planeBuilder.build(),game.getBullets());
+        return new Game(game.getPlayers(),planeBuilder.build(),game.getBullets(),game.getGameState());
     }
 
     public Game handleBulletBehaviour(Game game) {
@@ -252,24 +293,24 @@ public class Simulator extends Verticle {
         ImmutableList<Plane> planes = handleShootingAndUpdateLastShotTime(game, bulletsBuilder).build();
 
         // Move bullets and explode expired :)
-        for (Bullet bullet: game.getBullets()) {
+        for (Bullet bullet : game.getBullets()) {
             Bullet element = getNewPosition(bullet);
 
-            if(Math.sqrt(Math.pow(element.getX() - element.getStartPositionX(), 2) + Math.pow(element.getY() - element.getStartPositionY(), 2)) < bullet.getWeapon().getRange()) {
+            if (Math.sqrt(Math.pow(element.getX() - element.getStartPositionX(), 2) + Math.pow(element.getY() - element.getStartPositionY(), 2)) < bullet.getWeapon().getRange()) {
                 bulletsBuilder.add(element);
                 // send message kaboom or add kaboom to game object?!
                 // "Yes Rico, kaboom!"
             }
         }
-        return new Game(game.getPlayers(), planes, bulletsBuilder.build());
+        return new Game(game.getPlayers(), planes, bulletsBuilder.build(), game.getGameState());
     }
 
     private ImmutableList.Builder<Plane> handleShootingAndUpdateLastShotTime(Game game, ImmutableList.Builder<Bullet> bulletsBuilder) {
         ImmutableList.Builder<Plane> planesBuilder = ImmutableList.builder();
 
         // Check who is shooting
-        for(Plane plane: game.getPlanes()) {
-            if(plane.getFiringEnabled() && plane.getLastFiredAt() < System.currentTimeMillis()-plane.getPlaneType().getWeapon().getMinTimeBetweenShots()) {
+        for (Plane plane : game.getPlanes()) {
+            if (plane.getFiringEnabled() && plane.getLastFiredAt() < System.currentTimeMillis() - plane.getPlaneType().getWeapon().getMinTimeBetweenShots()) {
                 bulletsBuilder.add(new Bullet(plane.getX(), plane.getY(), plane.getDirection(), plane.getX(), plane.getY(), plane.getPlaneType().getWeapon(), plane.getPlayer()));
                 planesBuilder.add(plane.shotFired(System.currentTimeMillis()));
             } else {

@@ -1,12 +1,13 @@
+var gameWrapper = { game: null };
 (function () {
     var app = angular.module('app')
         .controller('gameController', ["$scope", "$rootScope", "vertxEventBus", "vertxEventBusService", "changeRequestService", function ($scope, $rootScope, vertxEventBus, vertxEventBusService, changeRequestService) {
             var _self = this;
-            var game;
             var board = $("#board");
 
             _self.logged = false;
             _self.canvas = null;
+            _self.HUD = null;
 
             $rootScope.$on("logged", function (event, data) {
                 _self.logged = true;
@@ -17,28 +18,48 @@
 
                 var $HUD = $('#HUD');
                 _self.HUD = $HUD[0].getContext('2d');
-                setTimeout(function() {
+                setTimeout(function () {
                     $HUD.attr('width', $HUD.width());
                     $HUD.attr('height', $HUD.height());
                 }, 200);
 
                 vertxEventBusService.on("two.clients", function (gameUpdated) {
-                    game = gameUpdated;
+                    gameWrapper.game = gameUpdated;
                     _self.plane = getPlayersPlane(gameUpdated, _self.login);
-                    updateCanvas(_self.canvas, _self.scaleData, _self.login, game, board);
+                    window.requestAnimationFrame(function () {
+                        updateCanvas(_self.canvas, _self.scaleData, _self.login, gameWrapper.game, board)
+                    });
+
                     updateHUD(_self.HUD, _self.plane);
+
+                    if(gameUpdated.status == "END_GAME") {
+                        $('#overlay').show();
+                    }
                 });
+
+                vertxEventBusService.on("game.over", function () {
+                    $('#overlay').show();
+                });
+
+                vertxEventBusService.on("game.start", function() {
+                    $('#overlay').hide();
+                })
             });
 
             $rootScope.$on("disconnected", function () {
                 _self.logged = false;
             });
-        }]);
+        }])
+        .controller('boardController', function($scope) {
+            $scope.game = gameWrapper;
+            $scope.filterBlue = { team: "BLUE" };
+            $scope.filterRed = { team: "RED" };
+        });
 })();
 
 function updateHUD(hud, plane) {
     var $HUD = $('#HUD');
-    hud.clearRect(0,0,$HUD.width(),$HUD.height());
+    hud.clearRect(0, 0, $HUD.width(), $HUD.height());
 
     // ramka
     hud.beginPath();
@@ -46,13 +67,13 @@ function updateHUD(hud, plane) {
     var barHeight = $HUD.height() - 20;
 
     var health = 0;
-    if(plane != undefined) {
+    if (plane != undefined) {
         health = plane.health / plane.planeType.health;
     }
 
-    var hp = barHeight*health;
+    var hp = barHeight * health;
 
-    hud.clearRect(0,0,$HUD.width(),$HUD.height());
+    hud.clearRect(0, 0, $HUD.width(), $HUD.height());
 
     hud.rect(15, 10, barWidth, barHeight);
     hud.lineWidth = 2;
@@ -61,37 +82,37 @@ function updateHUD(hud, plane) {
 
     // wypełnienie
     hud.beginPath();
-    hud.rect(15, 10+(barHeight-hp), barWidth, hp);
+    hud.rect(15, 10 + (barHeight - hp), barWidth, hp);
     hud.fillStyle = 'red';
     hud.fill();
 
     var timeP = 0;
-    if(plane != undefined) {
-        timeP = (new Date().getTime()-plane.lastFiredAt)/plane.planeType.weapon.minTimeBetweenShots;
-        if(timeP>1) {
+    if (plane != undefined) {
+        timeP = (new Date().getTime() - plane.lastFiredAt) / plane.planeType.weapon.minTimeBetweenShots;
+        if (timeP > 1) {
             timeP = 1;
         }
     }
 
-    var time = barHeight*timeP;
+    var time = barHeight * timeP;
 
     // ramka
     hud.beginPath();
-    hud.rect($HUD.width()/2+5, 10, barWidth, barHeight);
+    hud.rect($HUD.width() / 2 + 5, 10, barWidth, barHeight);
     hud.lineWidth = 2;
     hud.strokeStyle = 'black';
     hud.stroke();
 
     // wypełnienie
     hud.beginPath();
-    hud.rect($HUD.width()/2+5, 10+(barHeight-time), barWidth, time);
+    hud.rect($HUD.width() / 2 + 5, 10 + (barHeight - time), barWidth, time);
     hud.fillStyle = 'yellow';
     hud.fill();
 }
 
 function getPlayersPlane(game, login) {
-    for(i in game.planes) {
-        if(game.planes[i].player.nickName == login) {
+    for (i in game.planes) {
+        if (game.planes[i].player.nickName == login) {
             return game.planes[i];
         }
     }

@@ -13,9 +13,9 @@ public class GameTest {
 		ImmutableList<Player> players = ImmutableList.of();
 		ImmutableList<Plane> planes = ImmutableList.of();
 		ImmutableList<Bullet> bullets = ImmutableList.of();
-		Game game = new Game(players, planes, bullets);
+		Game game = new Game(players, planes, bullets, GameState.RUNNING);
 
-		assertEquals("{\"players\":[],\"planes\":[],\"bullets\":[]}", 
+		assertEquals("{\"players\":[],\"planes\":[],\"bullets\":[],\"gameState\":\"RUNNING\"}",
 				game.toJson().toString());
 	}
 
@@ -25,11 +25,11 @@ public class GameTest {
 				678, Team.BLUE));
 		ImmutableList<Plane> planes = ImmutableList.of();
 		ImmutableList<Bullet> bullets = ImmutableList.of();
-		Game game = new Game(players, planes, bullets);
+		Game game = new Game(players, planes, bullets, GameState.RUNNING);
 
 		assertEquals(
 				"{\"players\":[{\"nickName\":\"bryk\",\"points\":678"
-		        + ",\"team\":\"BLUE\"}],\"planes\":[],\"bullets\":[]}",
+		        + ",\"team\":\"BLUE\"}],\"planes\":[],\"bullets\":[],\"gameState\":\"RUNNING\"}",
 				game.toJson().toString());
 	}
 }

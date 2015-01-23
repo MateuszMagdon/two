@@ -14,7 +14,10 @@ import com.google.gson.Gson;
  */
 public final class Game implements Shareable {
 	private static final Gson GSON = new Gson();
-	
+
+	public static Long GAME_TIME = 60*1000L;
+	public static Long BREAK_TIME = 5*1000L;
+
 	/**
 	 * The list of all players.
 	 */
@@ -30,11 +33,17 @@ public final class Game implements Shareable {
 	 */
 	private final ImmutableList<Bullet> bullets;
 
+	/**
+	 * State of the game
+	 */
+	private final GameState gameState;
+
 	public Game(ImmutableList<Player> players, ImmutableList<Plane> planes,
-			ImmutableList<Bullet> bullets) {
+			ImmutableList<Bullet> bullets, GameState gameState) {
 		this.players = players;
 		this.planes = planes;
 		this.bullets = bullets;
+		this.gameState = gameState;
 	}
 	
 	/**
@@ -54,5 +63,9 @@ public final class Game implements Shareable {
 
 	public ImmutableList<Bullet> getBullets() {
 		return bullets;
+	}
+
+	public GameState getGameState() {
+		return gameState;
 	}
 }
