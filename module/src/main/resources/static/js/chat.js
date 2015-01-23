@@ -69,10 +69,15 @@
                 user.name = player.login;
                 user.group = player.group;
 
-                eb.send("game.players", {}).then(function (reply) {
-                    reply = eval('(' + reply + ')');
-                    $scope.users = reply;
-                });
+                function updatePoints() {
+                    eb.send("game.players", {}).then(function (reply) {
+                        reply = eval('(' + reply + ')');
+                        $scope.users = reply;
+                        setTimeout(updatePoints, 1000);
+                    });
+                }
+
+                updatePoints();
 
                 eb.addListener("chat.message", function (msg) {
                     handleMsg(msg);
