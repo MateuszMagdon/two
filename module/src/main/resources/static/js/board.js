@@ -218,8 +218,8 @@ function updateCanvas(canvas, scaleData, login, gameObject, board) {
             var picture = getPicture(ufo, images, isPlanes);
 
             var canvasImage = (new fabric.Image(picture, {
-                left: ufo.x,
-                top: ufo.y,
+                left: ufo.x * units.width_ratio,
+                top: ufo.y * units.height_ratio,
                 scaleX: scaleX,
                 scaleY: scaleY,
                 angle: ufo.direction,
@@ -278,7 +278,9 @@ function updateCanvas(canvas, scaleData, login, gameObject, board) {
     var images = getImages();
     var units = {
         horizontal: canvas.getWidth() / scaleData.horizontalUnits,
-        vertical: canvas.getHeight() / scaleData.verticalUnits
+        vertical: canvas.getHeight() / scaleData.verticalUnits,
+        width_ratio: canvas.getWidth() / 1100,
+        height_ratio: canvas.getHeight() / 900
     };
 
     allObjects = [];
