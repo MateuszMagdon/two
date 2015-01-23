@@ -73,7 +73,8 @@
                     eb.send("game.players", {}).then(function (reply) {
                         reply = eval('(' + reply + ')');
                         $scope.users = reply;
-                        setTimeout(updatePoints, 1000);
+                        console.log("updating");
+                        setTimeout(function() { updatePoints() }, 1000);
                     });
                 }
 

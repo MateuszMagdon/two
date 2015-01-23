@@ -132,74 +132,75 @@ public class Simulator extends Verticle {
 
             // detect collisions
             game = handleCollision(game);
-            
+
             shared.put("game", game);
             eb.publish("game.updated", true);
         });
     }
-    
-    
-    
-    public Game handleCollision(Game game){
-        
-    	ImmutableList<Bullet> bullets = game.getBullets();
-    	ImmutableList<Plane> currentPlanes = game.getPlanes();
-    	ImmutableList<Plane> deadPlanes = collisionDetector.getDeadPlanesList(currentPlanes, bullets);
-    	currentPlanes = collisionDetector.getAlivePlanesList(currentPlanes, bullets);
+
+
+    public Game handleCollision(Game game) {
+
+        ImmutableList<Bullet> bullets = game.getBullets();
+        ImmutableList<Plane> deadPlanes = collisionDetector.getDeadPlanesList(game);
+        ImmutableList<Plane> currentPlanes = collisionDetector.getAlivePlanesList(game);
         ImmutableList<Bullet> successBullets = collisionDetector.getSuccessBullets(deadPlanes, bullets);
-    	ImmutableList<Player> players = game.getPlayers();
-    	
-    	if (!deadPlanes.isEmpty()){
-        	ImmutableList.Builder<Player> newPlayers = new ImmutableList.Builder<>();        	
-        	for (Player player : players){
-        		Player currentPlayer = player;
-        		for (Bullet b : successBullets){
-        			if (player == b.getPlayer()){
-        				currentPlayer = player.addPoints(1);                		
-        			}
-        		}
-        		for (Plane plane : deadPlanes){
-        			if (currentPlayer == plane.getPlayer()){
-        				currentPlayer = currentPlayer.addPoints(-1);
-        			}
-        		}
-        		newPlayers.add(currentPlayer);
-        	}
-        	players = newPlayers.build();
-    	
-        	//handle death in client here
-        	
-        	for (Plane pl: deadPlanes){
-        		createRespawnTask(pl);
+        ImmutableList<Player> players = game.getPlayers();
+
+        if (!deadPlanes.isEmpty()) {
+            ImmutableList.Builder<Player> newPlayers = new ImmutableList.Builder<>();
+            for (Player player : players) {
+                Player currentPlayer = player;
+
+                for (Bullet b : successBullets) {
+                    if (player.equals(b.getPlayer())) {
+                        currentPlayer = player.addPoints(1);
+                    }
+                }
+
+                for (Plane plane : deadPlanes) {
+                    if (currentPlayer.equals(plane.getPlayer())) {
+                        currentPlayer = currentPlayer.addPoints(-1);
+                    }
+                }
+
+                newPlayers.add(currentPlayer);
             }
-        	
-             currentPlanes = removeFromImmutableList(currentPlanes,deadPlanes);
-             bullets = removeFromImmutableList(bullets, successBullets);
-    	}
-             bullets = removeFromImmutableList(bullets, collisionDetector.getSuccessBullets(currentPlanes, bullets));
+            players = newPlayers.build();
+
+            //handle death in client here
+
+            for (Plane pl : deadPlanes) {
+                createRespawnTask(pl);
+            }
+
+            currentPlanes = removeFromImmutableList(currentPlanes, deadPlanes);
+            bullets = removeFromImmutableList(bullets, successBullets);
+        }
+        bullets = removeFromImmutableList(bullets, collisionDetector.getSuccessBullets(currentPlanes, bullets));
 
         return new Game(players, currentPlanes, bullets, game.getGameState());
     }
-   
-    
-    public void createRespawnTask(Plane pl){
-    	getVertx().setTimer(5000, p -> {
-    		Plane oldplane = pl;
-    		Plane plane = new Plane(oldplane.getPlaneType(), 
-    				random.nextInt(map.getWidth()), 
-    				random.nextInt(map.getHeight()), 
-    				random.nextInt(360), 
-    				oldplane.getPlaneType().getSpeed(), 
-    				oldplane.getPlayer(), 
-    				oldplane.getPlaneType().getHealth(), 
-    				false, 
-    				System.currentTimeMillis(), 
-    				ChangeRequest.Turn.NONE);
 
-    		ImmutableList<Plane> planes = addToImmutableList(this.game.getPlanes(),plane);
-    		this.game = new Game(this.game.getPlayers(),planes,this.game.getBullets(),game.getGameState());
-    		//handle respawn in client here
-    	});
+
+    public void createRespawnTask(Plane pl) {
+        getVertx().setTimer(5000, p -> {
+            Plane oldplane = pl;
+            Plane plane = new Plane(oldplane.getPlaneType(),
+                    random.nextInt(map.getWidth()),
+                    random.nextInt(map.getHeight()),
+                    random.nextInt(360),
+                    oldplane.getPlaneType().getSpeed(),
+                    oldplane.getPlayer(),
+                    oldplane.getPlaneType().getHealth(),
+                    false,
+                    System.currentTimeMillis(),
+                    ChangeRequest.Turn.NONE);
+
+            ImmutableList<Plane> planes = addToImmutableList(this.game.getPlanes(), plane);
+            this.game = new Game(this.game.getPlayers(), planes, this.game.getBullets(), game.getGameState());
+            //handle respawn in client here
+        });
     }
 
     public Game createNewGame() {
@@ -242,7 +243,7 @@ public class Simulator extends Verticle {
         game = new Game(addToImmutableList(game.getPlayers(), player), addToImmutableList(game.getPlanes(), plane), game.getBullets(), game.getGameState());
     }
 
-    private<E> ImmutableList<E> addToImmutableList(ImmutableList<E> list, E newElement) {
+    private <E> ImmutableList<E> addToImmutableList(ImmutableList<E> list, E newElement) {
         return ImmutableList.<E>builder().addAll(list).add(newElement).build();
     }
 
@@ -250,18 +251,18 @@ public class Simulator extends Verticle {
         return ImmutableList.copyOf(filter(list, Predicates.not(Predicates.equalTo(elementToRemove))));
     }
 
-    private<E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, Predicate<E> elementToRemove) {
+    private <E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> list, Predicate<E> elementToRemove) {
         return ImmutableList.copyOf(filter(list, Predicates.not(elementToRemove)));
     }
-    
-    private<E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> originalList, ImmutableList<E> listToRemove) {
-    	ImmutableList.Builder<E> newList = new ImmutableList.Builder<E>();
-    	for(E element : originalList){
-            if(!listToRemove.contains(element)){
-            	newList.add(element);
+
+    private <E> ImmutableList<E> removeFromImmutableList(ImmutableList<E> originalList, ImmutableList<E> listToRemove) {
+        ImmutableList.Builder<E> newList = new ImmutableList.Builder<E>();
+        for (E element : originalList) {
+            if (!listToRemove.contains(element)) {
+                newList.add(element);
             }
         }
-    	return newList.build();
+        return newList.build();
     }
 
     private void upadteDelta() {
@@ -285,7 +286,7 @@ public class Simulator extends Verticle {
 
             planeBuilder.add(element);
         }
-        return new Game(game.getPlayers(),planeBuilder.build(),game.getBullets(),game.getGameState());
+        return new Game(game.getPlayers(), planeBuilder.build(), game.getBullets(), game.getGameState());
     }
 
     public Game handleBulletBehaviour(Game game) {
@@ -322,48 +323,48 @@ public class Simulator extends Verticle {
 
     private <T extends GameObject<T>> T getNewPosition(T element) {
         int correction = -90;
-        float newX = (float) (element.getX() + (element.getSpeed() * Math.cos(Math.toRadians(element.getDirection()+correction))) * delta);
-        float newY = (float) (element.getY() + (element.getSpeed() * Math.sin(Math.toRadians(element.getDirection()+correction))) * delta);
-        if(Plane.class.isAssignableFrom(element.getClass())) {
+        float newX = (float) (element.getX() + (element.getSpeed() * Math.cos(Math.toRadians(element.getDirection() + correction))) * delta);
+        float newY = (float) (element.getY() + (element.getSpeed() * Math.sin(Math.toRadians(element.getDirection() + correction))) * delta);
+        if (Plane.class.isAssignableFrom(element.getClass())) {
             Plane plane = Plane.class.cast(element);
 
-            if(newX > map.getWidth()) {
+            if (newX > map.getWidth()) {
                 newX = map.getWidth();
                 plane = plane.changeDirection(-2 * plane.getDirection());
             }
 
-            if(newX < 0) {
+            if (newX < 0) {
                 newX = 0;
                 plane = plane.changeDirection(2 * (180 - plane.getDirection()));
             }
 
-            if(newY > map.getHeight()) {
+            if (newY > map.getHeight()) {
                 newY = map.getHeight();
                 plane = plane.changeDirection(180 - 2 * plane.getDirection());
 
             }
 
-            if(newY < 0) {
+            if (newY < 0) {
                 newY = 0;
                 plane = plane.changeDirection(180 - 2 * plane.getDirection());
             }
-            
+
             return (T) GameObject.class.cast(plane.moveTo(newX, newY));
         } else {
 
-            if(newX > map.getWidth()) {
+            if (newX > map.getWidth()) {
                 newX = 0;
             }
 
-            if(newX < 0) {
+            if (newX < 0) {
                 newX = map.getWidth();
             }
 
-            if(newY > map.getHeight()) {
+            if (newY > map.getHeight()) {
                 newY = 0;
             }
 
-            if(newY < 0) {
+            if (newY < 0) {
                 newY = map.getHeight();
             }
 

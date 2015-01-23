@@ -39,4 +39,24 @@ public final class Player {
 	public Player resetPoints() {
 		return new Player(nickName, 0, team);
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Player)) return false;
+
+		Player player = (Player) o;
+
+		if (!nickName.equals(player.nickName)) return false;
+		if (team != player.team) return false;
+
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = nickName.hashCode();
+		result = 31 * result + team.hashCode();
+		return result;
+	}
 }
